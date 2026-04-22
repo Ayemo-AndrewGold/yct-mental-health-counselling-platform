@@ -1,39 +1,58 @@
-import React from 'react'
+import React from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 
 const Footer = () => {
   return (
-    <div>
-            <footer style={{
-        background: '#1a5c2a', color: 'rgba(255,255,255,0.7)',
-        padding: '2rem 2rem 1.5rem', marginTop: '3rem',
-      }}>
-        <div className="footer-top" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1.5rem', marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{
-              width: '36px', height: '36px', borderRadius: '50%',
-              background: '#f5b829', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', fontWeight: 700, fontSize: '13px', color: '#1a5c2a',
-            }}>YCT</div>
-            <div style={{ color: '#fff', fontSize: '14px', fontWeight: 500, lineHeight: 1.2 }}>
-              MindBridge
-              <div style={{ fontSize: '11px', opacity: 0.6, fontWeight: 400 }}>Dept. of Computer Technology, Yabatech</div>
-            </div>
+    <footer className="bg-green-900 text-white/80 mt-16">
+
+      <div className="max-w-6xl mx-auto px-6 py-12">
+
+        {/* Top */}
+        <div className="flex flex-col md:flex-row justify-between gap-8 mb-8">
+
+          {/* Brand */}
+          <div className="flex items-center gap-3">
+                    {/* Logo */}
+        <Link href="/" className="flex items-center gap-3">
+          <Image src="/favicon.png" width={52} height={52} alt="Logo" />
+
+          <div className="leading-tight">
+            <p className="text-lg font-semibold">MindBridge</p>
+            <p className="text-xs text-white/60">
+              Yabatech Mental Health Platform
+            </p>
+          </div>
+        </Link>
           </div>
 
-          <div className="footer-links" style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-            {['Privacy Policy', 'About the Project', 'Contact Counsellors', 'Resources'].map((link) => (
-              <a key={link} href="#" style={{ color: 'rgba(255,255,255,0.65)', fontSize: '13px', textDecoration: 'none' }}>{link}</a>
+          {/* Links */}
+          <div className="flex flex-wrap gap-6 text-base">
+            {[
+              'Privacy Policy',
+              'About the Project',
+              'Contact Counsellors',
+              'Resources',
+            ].map((link) => (
+              <a
+                key={link}
+                href="#"
+                className="hover:text-yellow-400 transition"
+              >
+                {link}
+              </a>
             ))}
           </div>
         </div>
 
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.12)', paddingTop: '1rem', fontSize: '12px', color: 'rgba(255,255,255,0.45)' }}>
-          &copy; 2025 MindBridge — Student Mental Health &amp; Counselling Platform, Yaba College of Technology, Lagos.
-          Built by Group A, Dept. of Computer Technology.
+        {/* Bottom */}
+        <div className="border-t border-white/20 pt-6 text-sm text-white/60">
+          © 2026 MindBridge — Student Mental Health Platform, Yabatech.
         </div>
-      </footer>
-    </div>
-  )
-}
 
-export default Footer
+      </div>
+    </footer>
+  );
+};
+
+export default Footer;
