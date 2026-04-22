@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 const DEPARTMENTS = [
   'Computer Technology',
@@ -17,7 +18,7 @@ const DEPARTMENTS = [
   'Other',
 ];
 
-const LEVELS = ['ND 1', 'ND 2', 'HND 1', 'HND 2'];
+const LEVELS = ['ND 1FT', 'ND 2FT', 'ND 1PT', 'ND 2PT', 'ND 3PT', 'HND 1FT', 'HND 2FT', 'HND 1PT', 'HND 2PT', 'HND 3PT'];
 
 function getStrength(password: string): { score: number; label: string; color: string } {
   let score = 0;
@@ -117,67 +118,78 @@ export default function RegisterPage() {
      */
     <div className="h-screen overflow-hidden flex">
 
-      {/* ── LEFT PANEL — fixed, never scrolls ── */}
-      <div className="hidden lg:flex w-75 xl:w-150 shrink-0 flex-col justify-between bg-[#1a5c2a] px-8  py-10">
-        <div>
-          {/* Brand */}
-          <div className="flex items-center gap-3 mb-10">
-            <div className="w-9 h-9 rounded-full bg-[#f5b829] flex items-center justify-center text-[#1a5c2a] text-xs font-bold shrink-0">
-              YCT
-            </div>
-            <div className="leading-tight">
-              <p className="text-sm font-medium text-white">MindBridge</p>
-              <p className="text-[10px] text-white/55">Yabatech Mental Health Platform</p>
-            </div>
-          </div>
+ {/* ───────── LEFT PANEL (NOW PREMIUM BACKGROUND) ───────── */}
+      <div className="hidden lg:flex w-[45%] relative flex-col justify-between px-8 py-8">
 
-          <h2 className="text-2xl pt-15 font-bold text-white leading-snug mb-3">
-            Your journey to{' '}
-            <span className="text-[#f5b829]">better wellbeing</span>{' '}
-            starts here.
+        {/* Background Image */}
+        <Image
+          src="/health8.jpg"
+          alt="Yabatech Campus"
+          fill
+          className="object-cover"
+        />
+
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-green-950/85" />
+
+        {/* Content */}
+        <div className="relative z-10">
+          <Link href="/" className="flex items-center gap-3 mb-12">
+            <Image src="/favicon.png" width={55} height={55} alt="Logo" />
+            <div>
+              <p className="text-white text-xl font-semibold">MindBridge</p>
+              <p className="text-white/60 text-sm">Yabatech Mental Health Platform</p>
+            </div>
+          </Link>
+
+          <h2 className="text-4xl font-bold text-white leading-tight mb-5">
+            Your journey to <span className="text-yellow-400">better wellbeing</span> starts here.
           </h2>
 
-          <p className="text-xs text-white/65 leading-relaxed mb-7">
-            Create your free account and get immediate access to mental health
-            support designed for Yabatech students.
+          <p className="text-white/70 text-base leading-relaxed mb-10 max-w-md">
+            Join thousands of students accessing safe, private and professional mental health support.
           </p>
 
-          <div className="space-y-4">
+          <div className="space-y-6">
             {[
-              { n: '1', title: 'Create your account', desc: 'Register with your matric number and email.' },
-              { n: '2', title: 'Take a quick assessment', desc: 'Understand your mental health status in minutes.' },
-              { n: '3', title: 'Connect with support', desc: 'Book a session or chat with a counsellor securely.' },
-            ].map(({ n, title, desc }) => (
-              <div key={n} className="flex gap-3 items-start">
-                <div className="w-5 h-5 rounded-full bg-[#f5b829]/20 border border-[#f5b829]/45 text-[#f5b829] text-[11px] font-medium flex items-center justify-center shrink-0 mt-0.5">
-                  {n}
+              { n: '1', t: 'Create account', d: 'Register with your school details' },
+              { n: '2', t: 'Get assessed', d: 'Understand your mental wellbeing' },
+              { n: '3', t: 'Get support', d: 'Book or chat with counsellors' },
+            ].map((i) => (
+              <div key={i.n} className="flex gap-3">
+                <div className="w-6 h-6 rounded-full bg-yellow-400 text-green-900 flex items-center justify-center text-xs font-bold">
+                  {i.n}
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-white">{title}</p>
-                  <p className="text-[11px] text-white/55 leading-relaxed">{desc}</p>
+                  <p className="text-white font-medium text-sm">{i.t}</p>
+                  <p className="text-white/60 text-xs">{i.d}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="border-t border-white/10 pt-4">
-          <p className="text-[10px] text-white/30">
-            © 2025 MindBridge · Dept. of Computer Technology, Yaba College of Technology
-          </p>
-        </div>
+        <p className="relative z-10 text-xs text-white/40">
+          © 2025 MindBridge — Yabatech
+        </p>
       </div>
 
       {/* ── RIGHT PANEL — scrollable form area ── */}
-      <div className="flex-1 overflow-y-auto bg-white px-2 py-8 lg:px-2">
+      <div className="flex-1 overflow-y-auto bg-white  py-8 lg:px-2">
         <div className="w-full max-w-md mx-auto">
 
           {/* Mobile brand */}
           <div className="flex items-center gap-3 mb-6 lg:hidden">
-            <div className="w-9 h-9 rounded-full bg-[#1a5c2a] flex items-center justify-center text-white text-xs font-bold">
-              YCT
-            </div>
-            <p className="text-sm font-medium text-[#1a5c2a]">MindBridge</p>
+            <Link href="/" className="flex items-center gap-3">
+              <Image src="/favicon.png" width={52} height={52} alt="Logo" />
+
+              <div className="leading-tight">
+                <p className="text-lg font-semibold">MindBridge</p>
+                <p className="text-xs text-white/60">
+                  Yabatech Mental Health Platform
+                </p>
+              </div>
+            </Link>
           </div>
 
           {/* Badge */}

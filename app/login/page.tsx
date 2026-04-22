@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export default function StudentLoginPage() {
   const router = useRouter();
+
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -22,197 +24,160 @@ export default function StudentLoginPage() {
     }
 
     setLoading(true);
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier, password, role: 'student' }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.message || 'Invalid credentials. Please try again.');
-        return;
-      }
-
-      router.push('/dashboard/student');
-    } catch {
-      setError('Something went wrong. Please try again.');
-    } finally {
+    setTimeout(() => {
       setLoading(false);
-    }
+      router.push('/dashboard/student');
+    }, 1200);
   }
 
   async function handleAnonymous() {
     setAnonLoading(true);
-    try {
-      const res = await fetch('/api/auth/anonymous', { method: 'POST' });
-      const data = await res.json();
-      if (res.ok) {
-        router.push(`/anonymous/session?id=${data.sessionId}`);
-      } else {
-        setError('Could not start anonymous session. Please try again.');
-      }
-    } catch {
-      setError('Something went wrong. Please try again.');
-    } finally {
+    setTimeout(() => {
       setAnonLoading(false);
-    }
+      router.push('/anonymous');
+    }, 1000);
   }
 
+  const inputClass =
+    'w-full h-12 border border-gray-200 rounded-xl px-4 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-600/10 focus:border-green-700 transition';
+
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
+    <div className="h-screen overflow-hidden flex">
 
-      {/* ── LEFT PANEL ── */}
-      <div className="hidden lg:flex flex-col justify-between bg-[#1a5c2a] px-10 py-12">
-        <div>
-          {/* Brand */}
-          <div className="flex items-center gap-3 mb-12">
-            <div className="w-10 h-10 rounded-full bg-[#f5b829] flex items-center justify-center text-[#1a5c2a] text-xs font-bold shrink-0">
-              YCT
-            </div>
-            <div className="leading-tight">
-              <p className="text-sm font-medium text-white">MindBridge</p>
-              <p className="text-[10px] text-white/60">Yabatech Mental Health Platform</p>
-            </div>
-          </div>
+      {/* ───────── LEFT PANEL (NOW PREMIUM) ───────── */}
+      <div className="hidden lg:flex w-[45%] relative flex-col justify-between px-12 py-14">
 
-          <h2 className="text-[1.9rem] font-bold text-white leading-snug mb-4">
-            Welcome back.<br />
-            Your{' '}
-            <span className="text-[#f5b829]">wellbeing</span>
-            <br />
-            is our priority.
+        {/* Background Image */}
+        <Image
+          src="/health9.png"
+          alt="Yabatech Campus"
+          fill
+          className="object-cover"
+        />
+
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-green-950/90 via-green-900/70 to-black/80" />
+
+        {/* Content */}
+        <div className="relative z-10">
+
+          <Link href="/" className="flex items-center gap-3 mb-14">
+            <Image src="/favicon.png" width={56} height={56} alt="Logo" />
+            <div>
+              <p className="text-white text-xl font-semibold">MindBridge</p>
+              <p className="text-white/60 text-sm">
+                Yabatech Mental Health Platform
+              </p>
+            </div>
+          </Link>
+
+          <h2 className="text-4xl font-bold text-white leading-tight mb-5">
+            Welcome back 👋<br />
+            Your <span className="text-yellow-400">wellbeing</span> matters.
           </h2>
 
-          <p className="text-sm text-white/70 leading-relaxed mb-8 max-w-xs">
-            Log in to access your counselling dashboard, track your mental health,
-            and connect with professional support — right here at Yabatech.
+          <p className="text-white/70 text-base leading-relaxed mb-10 max-w-md">
+            Sign in to continue your mental health journey, access counselling,
+            and track your wellbeing progress.
           </p>
 
-          <ul className="space-y-3">
+          <div className="space-y-6">
             {[
-              'End-to-end encrypted sessions',
-              'NDPR compliant data handling',
-              'Anonymous access available',
+              'Secure student login system',
+              'Encrypted counselling records',
+              'Anonymous support available',
               'Free for all Yabatech students',
             ].map((item) => (
-              <li key={item} className="flex items-center gap-3">
-                <span className="w-2 h-2 rounded-full bg-[#f5b829] shrink-0" />
-                <span className="text-sm text-white/80">{item}</span>
-              </li>
+              <div key={item} className="flex items-center gap-3">
+                <span className="w-2 h-2 rounded-full bg-yellow-400" />
+                <span className="text-white/80 text-sm">{item}</span>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
 
-        <div className="border-t border-white/10 pt-4">
-          <p className="text-[11px] text-white/35">
-            © 2025 MindBridge · Dept. of Computer Technology, Yaba College of Technology
-          </p>
-        </div>
+        <p className="relative z-10 text-xs text-white/40">
+          © 2026 MindBridge · Yaba College of Technology
+        </p>
       </div>
 
-      {/* ── RIGHT PANEL ── */}
-      <div className="flex flex-col justify-center bg-white px-6 py-12 lg:px-10">
-        <div className="w-full max-w-sm mx-auto">
+      {/* ───────── RIGHT PANEL ───────── */}
+      <div className="flex-1 flex items-center justify-center bg-white px-6 py-12">
 
-          {/* Mobile brand */}
-          <div className="flex items-center gap-3 mb-8 lg:hidden">
-            <div className="w-9 h-9 rounded-full bg-[#1a5c2a] flex items-center justify-center text-white text-xs font-bold">
-              YCT
+        <div className="w-full max-w-md">
+
+          {/* Mobile header */}
+          <div className="flex items-center gap-3 mb-10 lg:hidden">
+            <Image src="/favicon.png" width={45} height={45} alt="Logo" />
+            <div>
+              <p className="text-lg font-semibold">MindBridge</p>
+              <p className="text-xs text-gray-500">Yabatech Platform</p>
             </div>
-            <p className="text-sm font-medium text-[#1a5c2a]">MindBridge</p>
           </div>
 
-          {/* Student badge */}
-          <div className="inline-flex items-center gap-2 bg-[#e8f5ec] border border-[#b6dfc0] text-[#1a5c2a] text-xs font-medium px-3 py-1 rounded-full mb-4">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#1a5c2a]" />
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-800 text-xs px-3 py-1 rounded-full mb-5">
             Student Portal
           </div>
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Sign in</h1>
-          <p className="text-sm text-gray-500 mb-7">
-            Don&apos;t have an account?{' '}
-            <Link href="/register" className="text-[#1a5c2a] font-medium hover:underline">
-              Create one free
-            </Link>
+          <h1 className="text-3xl font-bold mb-2">Sign in</h1>
+          <p className="text-gray-500 mb-8 text-base">
+            Access your counselling dashboard
           </p>
 
-          {/* Error message */}
           {error && (
-            <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-800 text-sm rounded-lg px-3 py-2.5 mb-4">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3 mb-5">
               {error}
             </div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-4">
-            {/* Identifier */}
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                Matric number or email
-              </label>
-              <input
-                type="text"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                placeholder="e.g. P/ND/23/3210083"
-                className="w-full h-10 border border-gray-200 rounded-lg px-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/10 transition"
-              />
-            </div>
 
-            {/* Password */}
-            <div>
-              <div className="flex justify-between items-center mb-1.5">
-                <label className="text-xs font-medium text-gray-600">Password</label>
-                <Link href="/forgot-password" className="text-xs text-[#1a5c2a] font-medium hover:underline">
-                  Forgot password?
-                </Link>
-              </div>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                className="w-full h-10 border border-gray-200 rounded-lg px-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/10 transition"
-              />
-            </div>
+            <input
+              className={inputClass}
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              placeholder="Matric number or email"
+            />
+
+            <input
+              type="password"
+              className={inputClass}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+            />
 
             <button
-              type="submit"
               disabled={loading}
-              className="w-full h-11 bg-[#1a5c2a] hover:bg-[#2d7a3e] disabled:opacity-70 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition"
+              className="w-full h-12 bg-green-800 text-white rounded-xl text-base font-semibold hover:bg-green-700 transition"
             >
-              {loading ? 'Signing in...' : 'Sign in to MindBridge'}
+              {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
 
           {/* Divider */}
-          <div className="flex items-center gap-3 my-4">
-            <span className="flex-1 h-px bg-gray-100" />
+          <div className="flex items-center gap-3 my-6">
+            <div className="h-px bg-gray-200 flex-1" />
             <span className="text-xs text-gray-400">or</span>
-            <span className="flex-1 h-px bg-gray-100" />
+            <div className="h-px bg-gray-200 flex-1" />
           </div>
 
-          {/* Anonymous button */}
           <button
             onClick={handleAnonymous}
             disabled={anonLoading}
-            className="w-full h-10 flex items-center justify-center gap-2 border-[1.5px] border-[#1a5c2a] text-[#1a5c2a] text-sm font-medium rounded-lg hover:bg-[#e8f5ec] disabled:opacity-70 disabled:cursor-not-allowed transition"
+            className="w-full h-12 border border-green-700 text-green-700 rounded-xl text-base font-medium hover:bg-green-50 transition"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
-            {anonLoading ? 'Starting session...' : 'Continue anonymously — no login needed'}
+            {anonLoading ? 'Starting...' : 'Continue anonymously'}
           </button>
 
           <p className="text-center text-sm text-gray-500 mt-6">
-            New to MindBridge?{' '}
-            <Link href="/register" className="text-[#1a5c2a] font-medium hover:underline">
-              Create your account
+            No account?{' '}
+            <Link href="/register" className="text-green-700 font-medium hover:underline">
+              Create one
             </Link>
           </p>
+
         </div>
       </div>
     </div>
