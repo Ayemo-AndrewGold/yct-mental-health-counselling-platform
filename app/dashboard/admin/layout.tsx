@@ -1,13 +1,10 @@
-import AdminHeader from "@/components/admin/AdminHeader";
-import AdminSidebar from "@/components/admin/AdminSidebar";
+import AdminSidebar from './AdminSidebar';
+import AdminHeader from './AdminHeader';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LAYOUT
 // Wraps every page under /dashboard/admin/
 // Sidebar stays fixed; header stays fixed; only <children> scrolls.
-
-
-
 // ─────────────────────────────────────────────────────────────────────────────
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (

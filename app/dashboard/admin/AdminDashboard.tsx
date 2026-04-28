@@ -8,7 +8,7 @@ import {
   type Severity, type SessionType, type UserStatus, type UserRole, type Trend,
   type RecentUser, type RecentSession, type SystemAlert, type DeptInsight,
   type StatCardData,
-} from './Types';
+} from './types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SHARED PRIMITIVES
