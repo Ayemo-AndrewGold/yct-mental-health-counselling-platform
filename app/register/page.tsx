@@ -81,22 +81,22 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/register', {
+      const res = await fetch('http://127.0.0.1:8000/api/auth/register/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          firstName: form.firstName,
-          lastName: form.lastName,
-          matricNumber: form.matricNumber,
+          full_name: `${form.firstName} ${form.lastName}`,
           email: form.email,
-          department: form.department,
-          level: form.level,
           password: form.password,
+          role: 'student',
+          matric_number: form.matricNumber,
+          department: form.department,
+          level: form.level, 
         }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.message || 'Registration failed. Please try again.'); return; }
-      router.push('/dashboard/student');
+      router.push('/login');
     } catch {
       setError('Something went wrong. Please try again.');
     } finally {
@@ -108,14 +108,6 @@ export default function RegisterPage() {
     'w-full h-10 border border-gray-200 rounded-lg px-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/10 transition bg-white';
 
   return (
-    /*
-     * KEY LAYOUT TRICK (used by Notion, Linear, Vercel):
-     * — Outer shell: h-screen overflow-hidden (clips everything to viewport)
-     * — Left panel:  fixed height, no overflow (never scrolls)
-     * — Right panel: overflow-y-auto (only the form area scrolls)
-     * Result: left stays anchored, right scrolls independently if needed.
-     * On most desktop screens the form fits without any scrolling at all.
-     */
     <div className="h-screen overflow-hidden flex">
 
  {/* ───────── LEFT PANEL (NOW PREMIUM BACKGROUND) ───────── */}

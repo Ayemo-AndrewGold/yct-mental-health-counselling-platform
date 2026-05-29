@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Cookies from 'js-cookie';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -94,8 +95,10 @@ export default function AdminSidebar() {
   const router   = useRouter();
 
   async function handleLogout() {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/login');
+    Cookies.remove('access');
+    Cookies.remove('refresh');
+    Cookies.remove('user');
+    router.push('/login/admin')
   }
 
   return (

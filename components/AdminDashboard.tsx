@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getAdminStats, getAdminStudents, getAdminAppointments } from '@/lib/api';
 import Link from 'next/link';
 import {
   STAT_CARDS, RECENT_USERS, RECENT_SESSIONS,
@@ -8,8 +9,40 @@ import {
   type Severity, type SessionType, type UserStatus, type UserRole, type Trend,
   type RecentUser, type RecentSession, type SystemAlert, type DeptInsight,
   type StatCardData,
-} from './types';
+} from '../app/dashboard/admin/types';
 
+
+//Interface 
+interface Stats {
+  total_students: number;
+  total_counsellors: number;
+  total_appointments: number;
+  pending_appointments: number;
+  confirmed_appointments: number;
+  completed_appointments: number;
+}
+
+interface Student {
+  id: number;
+  full_name: string;
+  email: string;
+  matric_number: string;
+  department: string;
+  level: string;
+  date_joined: string;
+  is_active: boolean;
+}
+
+interface AdminAppointment {
+  id: number;
+  student_name: string;
+  counsellor_name: string;
+  session_type: string;
+  date: string;
+  time: string;
+  status: string;
+  duration: number;
+}
 // ─────────────────────────────────────────────────────────────────────────────
 // SHARED PRIMITIVES
 // ─────────────────────────────────────────────────────────────────────────────
@@ -299,15 +332,46 @@ function PlatformMetrics() {
 // ─────────────────────────────────────────────────────────────────────────────
 export default function AdminDashboard() {
   const [alerts, setAlerts] = useState<SystemAlert[]>(SYSTEM_ALERTS);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [appointments, setAppointments] = useState<AdminAppointment[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  function dismissAlert(id: string) {
-    setAlerts((prev) => prev.filter((a) => a.id !== id));
+    useEffect(() => {
+    Promise.all([
+      getAdminStats(),
+      getAdminStudents(),
+      getAdminAppointments(),
+    ]).then(([statsData, studentsData, appointmentsData]) => {
+      if (statsData) setStats(statsData);
+      setStudents(studentsData);
+      setAppointments(appointmentsData);
+      setLoading(false);
+    });
+  }, []);
+
+
+    const criticalCount = alerts.filter((a) => a.type === 'critical').length;
+
+    function formatDate(dateStr: string) {
+      return new Date(dateStr).toLocaleDateString('en-GB', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+      });
+    }
+
+    function formatTime(timeStr: string) {
+    const [h, m] = timeStr.split(':');
+    const hour = parseInt(h);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+    return `${displayHour}:${m} ${ampm}`;
   }
 
-  const criticalCount = alerts.filter((a) => a.type === 'critical').length;
+
+
 
   return (
-    <main className="flex-1 overflow-y-auto px-6 py-5 space-y-5 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded">
+    <main className="px-6 py-5 space-y-5 pb-10">
 
       {/* PAGE TITLE */}
       <div className="flex items-end justify-between">
@@ -327,33 +391,145 @@ export default function AdminDashboard() {
             </svg>
             Filter
           </button>
-          <button className="flex items-center gap-1.5 h-8 border border-gray-100 rounded-lg px-3 bg-white hover:bg-gray-50 text-[11px] text-gray-500 font-medium transition-colors">
-            April 2026
-            <svg className="w-[10px] h-[10px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
         </div>
       </div>
 
       {/* STAT CARDS */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-        {STAT_CARDS.map((card) => (
-          <StatCard key={card.label} card={card} />
-        ))}
-      </div>
+{loading ? (
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white border border-gray-100 rounded-2xl p-5 animate-pulse">
+              <div className="h-8 w-16 bg-gray-200 rounded mb-2" />
+              <div className="h-3 w-24 bg-gray-100 rounded" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+          {[
+            {
+              label: 'Total Students',
+              value: String(stats?.total_students ?? 0),
+              sub: 'Registered on platform',
+              accent: 'bg-[#1a5c2a]',
+              iconBg: 'bg-[#e8f5ec]',
+              iconColor: '#1a5c2a',
+              iconKey: 'users',
+              trend: 'up' as const,
+              trendLabel: 'Active',
+            },
+            {
+              label: 'Counsellors',
+              value: String(stats?.total_counsellors ?? 0),
+              sub: 'Available counsellors',
+              accent: 'bg-[#f5a623]',
+              iconBg: 'bg-[#fdf3dc]',
+              iconColor: '#d97706',
+              iconKey: 'briefcase',
+              trend: 'neutral' as const,
+              trendLabel: 'Staff',
+            },
+            {
+              label: 'Total Sessions',
+              value: String(stats?.total_appointments ?? 0),
+              sub: `${stats?.completed_appointments ?? 0} completed`,
+              accent: 'bg-blue-500',
+              iconBg: 'bg-blue-50',
+              iconColor: '#2563eb',
+              iconKey: 'headset',
+              trend: 'up' as const,
+              trendLabel: 'Sessions',
+            },
+            {
+              label: 'Pending Sessions',
+              value: String(stats?.pending_appointments ?? 0),
+              sub: 'Awaiting confirmation',
+              accent: 'bg-red-500',
+              iconBg: 'bg-red-50',
+              iconColor: '#ef4444',
+              iconKey: 'clock',
+              trend: 'down' as const,
+              trendLabel: 'Pending',
+            },
+          ].map((card) => (
+            <div key={card.label} className="bg-white border border-gray-100 rounded-2xl p-5 relative overflow-hidden hover:shadow-md transition-shadow duration-200">
+            <div className={`absolute top-0 left-0 right-0 h-[2px] ${card.accent}`} />
+            <div className="flex items-start justify-between mb-[14px]">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${card.iconBg}`}>
+                {STAT_ICONS[card.iconKey]?.(card.iconColor)}
+              </div>
+              <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-[3px] rounded-full
+                ${card.trend === 'up' ? 'bg-green-50 text-green-700' :
+                  card.trend === 'down' ? 'bg-red-50 text-red-600' :
+                  'bg-gray-100 text-gray-500'}`}>
+                {card.trendLabel}
+              </span>
+            </div>
+            <p className="text-[28px] font-bold text-gray-900 leading-none tracking-tight">{card.value}</p>
+            <p className="text-[11.5px] text-gray-500 mt-1">{card.label}</p>
+            <div className="h-px bg-gray-50 my-[14px]" />
+            <p className="text-[10.5px] text-gray-400">{card.sub}</p>
+          </div>
+          ))}
+        </div>
+      )}
 
       {/* ROW 2 — RECENT USERS + SYSTEM ALERTS */}
       <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-4">
 
         <Panel
           title="Recent Registrations"
-          badge="5 today"
+          badge={`${students.slice(0, 5).length} shown`}
           badgeCls="bg-blue-50 text-blue-700"
           action="Manage all users"
-          actionHref="/dashboard/admin/users"
+          actionHref="/dashboard/admin/students"
         >
-          <RecentUsersTable users={RECENT_USERS} />
+          {loading ? (
+            <div className="px-5 py-4 space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-3 animate-pulse">
+                  <div className="w-8 h-8 rounded-full bg-gray-200" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3 w-32 bg-gray-200 rounded" />
+                    <div className="h-2.5 w-48 bg-gray-100 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : students.length === 0 ? (
+            <div className="px-5 py-8 text-center">
+              <p className="text-[12px] text-gray-400">No students registered yet.</p>
+            </div>
+          ) : (
+            <div className="px-5 divide-y divide-gray-50">
+              {students.slice(0, 5).map((student) => {
+                const initials = student.full_name
+                  .split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
+                return (
+                  <div key={student.id} className="flex items-center gap-3 py-3 group">
+                    <div className="w-8 h-8 rounded-full bg-[#e8f5ec] text-[#1a5c2a] border border-[#b6dfc0] flex items-center justify-center text-[10px] font-bold shrink-0">
+                      {initials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-semibold text-gray-900 truncate">
+                        {student.full_name}
+                      </p>
+                      <p className="text-[10.5px] text-gray-400 mt-px">
+                        {student.department ?? 'No department'} · Joined {student.date_joined}
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-semibold px-2 py-[2px] rounded-full bg-blue-50 text-blue-700">
+                      Student
+                    </span>
+                    <span className={`text-[10px] font-semibold px-2 py-[2px] rounded-full
+                      ${student.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                      {student.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </Panel>
 
         <Panel
@@ -378,7 +554,7 @@ export default function AdminDashboard() {
               alerts.map((alert) => (
                 <AlertRow
                   key={alert.id}
-                  alert={{ ...alert, description: alert.description }}
+                  alert={alert}
                 />
               ))
             )}
@@ -394,28 +570,84 @@ export default function AdminDashboard() {
           badge="4 today"
           badgeCls="bg-[#e8f5ec] text-[#1a5c2a]"
           action="View all sessions"
-          actionHref="/dashboard/admin/cases"
+          actionHref="/dashboard/admin/appointments"
         >
-          <RecentSessionsTable sessions={RECENT_SESSIONS} />
-        </Panel>
-
-        <div className="flex flex-col gap-4">
-          {/* Dept breakdown */}
-          <Panel
-            title="Cases by Department"
-            action="Full breakdown"
-            actionHref="/dashboard/admin/insights"
-          >
-            <div className="px-5 py-3">
-              {DEPT_INSIGHTS.map((d) => (
-                <DeptBar key={d.dept} dept={d} />
+          {loading ? (
+            <div className="px-5 py-4 space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-3 animate-pulse">
+                  <div className="w-8 h-8 rounded-full bg-gray-200" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3 w-32 bg-gray-200 rounded" />
+                    <div className="h-2.5 w-48 bg-gray-100 rounded" />
+                  </div>
+                </div>
               ))}
             </div>
-          </Panel>
+          ) : appointments.length === 0 ? (
+            <div className="px-5 py-8 text-center">
+              <p className="text-[12px] text-gray-400">No appointments yet.</p>
+            </div>
+          ) : (
+            <div className="px-5 divide-y divide-gray-50">
+              {appointments.slice(0, 5).map((appt) => {
+                const initials = appt.student_name
+                  .split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
+                const statusMap: Record<string, string> = {
+                  Pending:   'bg-amber-50 text-amber-700',
+                  Confirmed: 'bg-green-50 text-green-700',
+                  Completed: 'bg-blue-50 text-blue-700',
+                  Cancelled: 'bg-red-50 text-red-600',
+                };
+                return (
+                  <div key={appt.id} className="flex items-center gap-3 py-3 group">
+                    <div className="w-8 h-8 rounded-full bg-[#e8f5ec] text-[#1a5c2a] border border-[#b6dfc0] flex items-center justify-center text-[10px] font-bold shrink-0">
+                      {initials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-semibold text-gray-900 truncate">
+                        {appt.student_name}
+                      </p>
+                      <p className="text-[10.5px] text-gray-400 mt-px">
+                        {appt.counsellor_name} · {formatDate(appt.date)} · {formatTime(appt.time)}
+                      </p>
+                    </div>
+                    <span className={`text-[10px] font-medium px-1.5 py-[1.5px] rounded-[5px]
+                      ${appt.session_type === 'Physical' ? 'bg-green-50 text-green-700' :
+                        appt.session_type === 'Video' ? 'bg-purple-50 text-purple-700' :
+                        'bg-blue-50 text-blue-700'}`}>
+                      {appt.session_type}
+                    </span>
+                    <span className={`text-[10px] font-semibold px-2 py-[2px] rounded-full ${statusMap[appt.status] ?? 'bg-gray-100 text-gray-500'}`}>
+                      {appt.status}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Panel>
 
-          {/* Platform metrics */}
+<div className="flex flex-col gap-4">
           <Panel title="Platform Metrics" action="Full report" actionHref="/dashboard/admin/reports">
-            <PlatformMetrics />
+            <div className="grid grid-cols-2 gap-3 px-5 py-4">
+              {[
+                { label: 'Total Sessions',    value: String(stats?.total_appointments ?? 0),  sub: 'All time'            },
+                { label: 'Completed',          value: String(stats?.completed_appointments ?? 0), sub: 'Successfully done' },
+                { label: 'Pending',            value: String(stats?.pending_appointments ?? 0),   sub: 'Awaiting action'   },
+                { label: 'Confirmed',          value: String(stats?.confirmed_appointments ?? 0), sub: 'Ready to go'       },
+              ].map((m) => (
+                <div key={m.label} className="bg-gray-50 border border-gray-100 rounded-xl p-3">
+                  <p className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-[0.06em] mb-1">
+                    {m.label}
+                  </p>
+                  <p className="text-[18px] font-bold text-gray-900 tracking-tight leading-none">
+                    {m.value}
+                  </p>
+                  <p className="text-[10px] text-gray-500 mt-1.5">{m.sub}</p>
+                </div>
+              ))}
+            </div>
           </Panel>
         </div>
       </div>
@@ -426,7 +658,7 @@ export default function AdminDashboard() {
           <div>
             <p className="text-[10px] font-bold text-[#f5a623] uppercase tracking-[0.08em] mb-1">Admin Insight</p>
             <h3 className="text-[15px] font-semibold text-white leading-snug">
-              Exam season alert — peak mental health demand incoming
+              Platform is live — monitor student activity closely
             </h3>
           </div>
           <Link
@@ -438,9 +670,9 @@ export default function AdminDashboard() {
         </div>
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: 'Expected demand increase', value: '+35%', sub: 'Based on last exam period'    },
-            { label: 'Counsellors needed',        value: '3 more', sub: 'To meet projected load'   },
-            { label: 'Highest risk cohort',       value: 'ND2',  sub: 'Computer Tech & Electrical' },
+            { label: 'Total Students',    value: String(stats?.total_students ?? 0),    sub: 'Registered users'      },
+            { label: 'Total Counsellors', value: String(stats?.total_counsellors ?? 0), sub: 'Available for sessions' },
+            { label: 'Total Sessions',    value: String(stats?.total_appointments ?? 0), sub: 'Booked so far'         },
           ].map((m) => (
             <div key={m.label} className="bg-white/[0.08] border border-white/[0.12] rounded-xl px-4 py-3">
               <p className="text-[9.5px] text-white/45 uppercase tracking-[0.06em] mb-1">{m.label}</p>

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Cookies from 'js-cookie'
 
 export default function StudentLoginPage() {
   const router = useRouter();
@@ -24,18 +25,46 @@ export default function StudentLoginPage() {
     }
 
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      router.push('/dashboard/student');
-    }, 1200);
+   try {
+    const res = await fetch('http://127.0.0.1:8000/api/auth/login/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json'},
+      body: JSON.stringify({ email: identifier, password})
+    });
+    const data = await res.json();
+    if(!res.ok) { setError(data.error || 'Invalid credentials.'); return;}
+
+    // Block non-student
+    if (data.user.role !== 'student'){
+      setError('Access denied. Student accounts only');
+      return;
+    }
+    Cookies.set('access', data.tokens.access, {expires: 1});
+    Cookies.set('refresh', data.tokens.refresh, { expires: 7 });
+    Cookies.set('user', JSON.stringify(data.user), { expires: 1})
+
+    router.push('/dashboard/student');
+   } catch {
+    setError('Something went wrong. Please try again.');
+   } finally {
+    setLoading(false)
+   }
   }
 
   async function handleAnonymous() {
     setAnonLoading(true);
-    setTimeout(() => {
-      setAnonLoading(false);
-      router.push('/anonymous');
-    }, 1000);
+    // setTimeout(() => {
+    //   setAnonLoading(false);
+    //   router.push('/anonymous');
+    // }, 1000);
+    try {
+        Cookies.set('user', JSON.stringify({ role: 'anonymous'}), { expires: 1});
+    router.push('/anonymous')
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setAnonLoading(false)
+    }
   }
 
   const inputClass =
@@ -175,6 +204,9 @@ export default function StudentLoginPage() {
             No account?{' '}
             <Link href="/register" className="text-green-700 font-medium hover:underline">
               Create one
+            </Link>
+            <Link href="/" className="text-red-700 pl-3 font-medium hover:underline">
+              Forget your password?
             </Link>
           </p>
 

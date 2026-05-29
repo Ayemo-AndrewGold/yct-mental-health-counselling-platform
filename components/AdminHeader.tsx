@@ -1,13 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Cookies from 'js-cookie'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 export default function AdminHeader() {
   const [notifOpen, setNotifOpen] = useState(false);
+  const [adminName, setAdminName] = useState('Admin');
+
+  useEffect (()=> {
+    const stored = Cookies.get('user');
+    if(stored) {
+      const parsed = JSON.parse(stored);
+      setAdminName(parsed.full_name?.split(' ')[0] ?? 'Admin');
+    }
+  }, []);
 
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-GB', {
@@ -23,7 +33,7 @@ export default function AdminHeader() {
       {/* ── LEFT ── */}
       <div>
         <h1 className="text-[14px] font-semibold text-gray-900 tracking-[-0.2px]">
-          {greeting}, Admin 👋
+          {adminName}, Admin 👋
         </h1>
         <p className="text-[11px] text-gray-400 mt-px">{dateStr} · Yaba College of Technology</p>
       </div>

@@ -222,7 +222,7 @@ export default function AdminResourcesPage() {
     <>
       {showModal && <UploadModal onClose={() => setShowModal(false)} />}
 
-      <main className="flex-1 overflow-y-auto px-6 py-5 space-y-5 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded">
+      <main className="px-6 py-5 space-y-5 pb-10">
 
         {/* Header */}
         <div className="flex items-end justify-between">

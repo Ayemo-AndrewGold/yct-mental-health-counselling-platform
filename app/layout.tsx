@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Lexend, DM_Sans } from "next/font/google";
+import { Geist, Geist_Mono, Lexend, Syne, DM_Sans } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,6 +12,17 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+  const dmSans = DM_Sans({
+     subsets: ['latin'],
+     weight: ['300', '400', '500'],
+     variable: '--font-dm-sans',
+   })
+ 
+const syne = Syne({
+subsets: ['latin'],
+  weight: ['400', '600', '700', '800'],
+  variable: '--font-syne',
+})
 
 const lexend = Lexend({
   subsets: ["latin"],
@@ -61,9 +72,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${lexend.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${lexend.variable} ${geistMono.variable} ${syne.variable} ${dmSans.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body>{children}</body>
     </html>
   );
 }

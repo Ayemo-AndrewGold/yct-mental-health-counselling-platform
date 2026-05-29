@@ -1,24 +1,17 @@
-import AdminSidebar from './AdminSidebar';
-import AdminHeader from './AdminHeader';
+import AdminHeader from "@/components/AdminHeader";
+import AdminSidebar from "@/components/AdminSidebar";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// LAYOUT
-// Wraps every page under /dashboard/admin/
-// Sidebar stays fixed; header stays fixed; only <children> scrolls.
-// ─────────────────────────────────────────────────────────────────────────────
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="h-screen flex overflow-hidden bg-[#f7f8f9]">
-
-      {/* Fixed left sidebar — never scrolls */}
       <AdminSidebar />
-
-      {/* Right column — header pinned, content scrolls */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <AdminHeader />
-        {children}
+        <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {children}
+        </div>
       </div>
-
     </div>
   );
 }
