@@ -25,7 +25,7 @@ export default function CounsellorLoginPage() {
 
     setLoading(true);
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/auth/login/', {
+      const res = await fetch('https://yct-mental-health-counselling-platform.onrender.com/api/auth/login/', {
         method: 'POST',
         headers: {'Content-Type': 'application/json' },
         body: JSON.stringify({ email: staffId, password }),
@@ -39,9 +39,9 @@ export default function CounsellorLoginPage() {
           setError('Access denied. Counsellor account only');
           return;
         }
-        Cookies.set('access', data.tokens.access);
-        Cookies.set('refresh', data.tokens.refresh);
-        Cookies.set('user', JSON.stringify(data.user));
+       Cookies.set('access',  data.tokens.access,        { expires: 1, sameSite: 'lax' })
+      Cookies.set('refresh', data.tokens.refresh,       { expires: 7, sameSite: 'lax' })
+      Cookies.set('user',    JSON.stringify(data.user), { expires: 1, sameSite: 'lax' })
         router.push('/dashboard/counsellor');
     } catch {
       setError('something went wrong. Please try again.')

@@ -54,7 +54,7 @@ export default function StudentLoginPage() {
     }
     setLoading(true)
     try {
-      const res  = await fetch('http://127.0.0.1:8000/api/auth/login/', {
+      const res  = await fetch('https://yct-mental-health-counselling-platform.onrender.com/api/auth/login/', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ email: identifier, password }),
@@ -65,10 +65,10 @@ export default function StudentLoginPage() {
         setError('Access denied. Student accounts only.')
         return
       }
-      Cookies.set('access',  data.tokens.access,          { expires: 1 })
-      Cookies.set('refresh', data.tokens.refresh,         { expires: 7 })
-      Cookies.set('user',    JSON.stringify(data.user),   { expires: 1 })
-      router.push('/dashboard/student')
+    Cookies.set('access',  data.tokens.access,        { expires: 1, sameSite: 'lax' })
+    Cookies.set('refresh', data.tokens.refresh,       { expires: 7, sameSite: 'lax' })
+    Cookies.set('user',    JSON.stringify(data.user), { expires: 1, sameSite: 'lax' })
+          router.push('/dashboard/student')
     } catch {
       setError('Something went wrong. Please try again.')
     } finally {

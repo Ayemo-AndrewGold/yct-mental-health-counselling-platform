@@ -66,20 +66,17 @@ export default function StudentLoginPage() {
         toast.error('Access denied. Student accounts only.')
         return
       }
-      Cookies.set('access',  data.tokens.access,          { expires: 1 })
-      Cookies.set('refresh', data.tokens.refresh,         { expires: 7 })
-      Cookies.set('user',    JSON.stringify(data.user),   { expires: 1 })
+      Cookies.set('access',  data.tokens.access,        { expires: 1, sameSite: 'lax' })
+      Cookies.set('refresh', data.tokens.refresh,       { expires: 7, sameSite: 'lax' })
+      Cookies.set('user',    JSON.stringify(data.user), { expires: 1, sameSite: 'lax' })
       
       toast.success(
         data.message || 'Login successful'
       )
 
-      setTimeout(() => {
-        router.push('/dashboard/student')
-      })
-      
+      router.push('/dashboard/student')
     } catch {
-      toast.error('Unable to connect to the server. Please try again shortly.')
+      toast.error('Unable to connect to the server. Please check your internet connection and try again.')
     } finally {
       setLoading(false)
     }
