@@ -138,12 +138,12 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="flex h-screen bg-white">
 
       {/* ══════════════════════════════════════
           LEFT PANEL — Image Slider (desktop)
       ══════════════════════════════════════ */}
-      <div className="hidden lg:flex w-[42%] flex-shrink-0 flex-col justify-between relative overflow-hidden bg-[#071a0f]">
+      <div className="hidden lg:flex w-[50%] flex-shrink-0 flex-col justify-between relative overflow-hidden bg-[#071a0f]">
 
         {/* ── Slider images ── */}
         {SLIDES.map((slide, i) => (
@@ -184,20 +184,19 @@ export default function RegisterPage() {
                 className="w-9 h-9 rounded-[9px] bg-gradient-to-br from-green-800 to-green-400 flex items-center justify-center text-white font-extrabold text-base flex-shrink-0"
                 style={{ fontFamily: 'Syne, sans-serif' }}
               >
-                M
+                <Image src="/favicon.png" width={36} height={36} alt="Logo" className="rounded-[9px]" />
               </div>
-              {/* Swap div above for your real logo:
-                  <Image src="/favicon.png" width={36} height={36} alt="Logo" className="rounded-[9px]" /> */}
+          
               <div>
-                <span className="block text-[1rem] font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
+                <span className="block text-[1.3rem] font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
                   MindBridge
                 </span>
-                <span className="block text-[0.67rem] text-white/35">Yabatech Mental Health Platform</span>
+                <span className="block text-[0.85rem] text-white/60">Yabatech Mental Health Platform</span>
               </div>
             </Link>
 
             <h2
-              className="text-[1.85rem] font-extrabold text-white leading-[1.2] tracking-tight mb-3"
+              className="text-[2.5rem] font-extrabold text-white leading-[1.2] tracking-tight mb-3"
               style={{ fontFamily: 'Syne, sans-serif' }}
             >
               Your journey to{' '}
@@ -205,12 +204,12 @@ export default function RegisterPage() {
               starts here.
             </h2>
 
-            <p className="text-[0.85rem] text-white/50 leading-[1.7] mb-8 max-w-xs">
+            <p className="text-[0.90rem] text-white/60 leading-[1.7] mb-8 ">
               Join thousands of Yabatech students accessing safe, private and professional mental health support.
             </p>
 
             {/* Steps */}
-            <div className="flex flex-col gap-[1.1rem] mb-8">
+            <div className="flex flex-col gap-[1.1rem] mb-5">
               {[
                 { n: '1', title: 'Create account', desc: 'Register with your school details' },
                 { n: '2', title: 'Get assessed',    desc: 'Understand your mental wellbeing' },
@@ -218,25 +217,25 @@ export default function RegisterPage() {
               ].map(({ n, title, desc }) => (
                 <div key={n} className="flex items-start gap-3">
                   <div
-                    className="w-6 h-6 rounded-full bg-yellow-400/[0.12] border border-yellow-400/30 flex items-center justify-center text-yellow-400 text-[11px] font-bold flex-shrink-0"
+                    className="w-6 h-6 rounded-full bg-yellow-400/[0.12] border border-yellow-400/30 flex items-center justify-center text-yellow-400 text-[18px] font-bold flex-shrink-0"
                     style={{ fontFamily: 'Syne, sans-serif' }}
                   >
                     {n}
                   </div>
                   <div>
-                    <p className="text-white text-[0.85rem] font-semibold">{title}</p>
-                    <p className="text-white/40 text-[0.75rem] mt-0.5">{desc}</p>
+                    <p className="text-white text-[1.2rem] font-semibold">{title}</p>
+                    <p className="text-white/60 text-[0.85rem] mt-0.5">{desc}</p>
                   </div>
                 </div>
               ))}
             </div>
 
             {/* Trust pills */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 ">
               {['100% Confidential', 'NDPR Compliant', 'Encrypted'].map((t) => (
                 <span
                   key={t}
-                  className="inline-flex items-center gap-[5px] bg-white/[0.05] border border-white/[0.08] text-white/45 text-[0.7rem] px-[10px] py-1 rounded-full"
+                  className="inline-flex items-center gap-[5px] bg-white/[0.05] border border-white/[0.08] text-white/45 text-[0.8rem] px-[10px] py-1 rounded-full"
                 >
                   <span className="w-[5px] h-[5px] rounded-full bg-green-400 flex-shrink-0 animate-pulse" />
                   {t}
@@ -262,7 +261,7 @@ export default function RegisterPage() {
                 />
               ))}
             </div>
-            <p className="text-[0.72rem] text-white/25">© 2026 MindBridge — Yabatech</p>
+            <p className="text-[0.82rem] text-white/25">© 2026 MindBridge — Yabatech</p>
           </div>
         </div>
       </div>
@@ -271,7 +270,7 @@ export default function RegisterPage() {
           RIGHT PANEL — Scrollable form
       ══════════════════════════════════════ */}
       <div className="flex-1 overflow-y-auto px-5 py-8 sm:px-10">
-        <div className="w-full max-w-[420px] mx-auto">
+        <div className="w-full max-w-[600px] mx-auto">
 
           {/* Mobile logo (hidden on desktop) */}
           <div className="flex items-center gap-[10px] mb-6 lg:hidden">
@@ -279,24 +278,24 @@ export default function RegisterPage() {
               className="w-[34px] h-[34px] rounded-[9px] bg-gradient-to-br from-green-800 to-green-400 flex items-center justify-center text-white font-extrabold text-[15px] flex-shrink-0"
               style={{ fontFamily: 'Syne, sans-serif' }}
             >
-              M
+              <Image src="/favicon.png" width={55} height={55} alt="Logo" />
             </div>
             <div>
-              <span className="block text-[0.95rem] font-bold text-[#0e2318]" style={{ fontFamily: 'Syne, sans-serif' }}>
+              <span className="block text-[1rem] font-bold text-[#0e2318]" style={{ fontFamily: 'Syne, sans-serif' }}>
                 MindBridge
               </span>
-              <span className="block text-[0.65rem] text-[#7a9c8a]">Yabatech Mental Health Platform</span>
+              <span className="block text-[0.95rem] text-[#7a9c8a]">Yabatech Mental Health Platform</span>
             </div>
           </div>
 
           {/* Badge */}
-          <div className="inline-flex items-center gap-[6px] bg-green-50 border border-green-200 text-green-800 text-[0.72rem] font-semibold px-3 py-1 rounded-full mb-3">
+          <div className="inline-flex items-center gap-[6px] bg-green-50 border border-green-200 text-green-800 text-[0.80rem] font-semibold px-3 py-1 rounded-full mb-3">
             <span className="w-[5px] h-[5px] rounded-full bg-green-700 flex-shrink-0" />
             Student Registration
           </div>
 
           <h1
-            className="text-[1.5rem] font-extrabold text-[#0e2318] mb-[3px]"
+            className="text-[2.2rem] font-extrabold text-[#0e2318] mb-[3px]"
             style={{ fontFamily: 'Syne, sans-serif' }}
           >
             Create your account
@@ -320,7 +319,7 @@ export default function RegisterPage() {
             {/* ── Personal info ── */}
             <p className={sectionLabel}>
               Personal info
-              <span className="flex-1 h-px bg-[#f1f5f9]" />
+              <span className="flex-1 h-px bg-[#e7ebf0]" />
             </p>
 
             <div className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
@@ -405,7 +404,7 @@ export default function RegisterPage() {
                 onChange={(e) => update('agreed', e.target.checked)}
                 className="w-[14px] h-[14px] mt-[1px] accent-[#166534] flex-shrink-0 cursor-pointer"
               />
-              <label htmlFor="agree" className="text-[0.77rem] text-[#7a9c8a] leading-[1.55] cursor-pointer">
+              <label htmlFor="agree" className="text-[0.79rem] text-[#7a9c8a] leading-[1.55] cursor-pointer">
                 I agree to the{' '}
                 <Link href="/privacy" className="text-[#166534] font-medium hover:underline">Privacy Policy</Link>
                 {' '}and{' '}

@@ -43,8 +43,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/favicon.png",
-        width: 1200,
-        height: 630,
+        width: 'auto',
+        height: 'auto',
         alt: "YCT Student Mental Health & Counselling Platform",
       },
     ],

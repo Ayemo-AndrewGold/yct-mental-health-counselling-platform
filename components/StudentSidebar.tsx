@@ -1,148 +1,341 @@
+'use client'
 
-'use client';
-
-import React from 'react'
-import { usePathname, useRouter } from 'next/navigation';
-import Image from 'next/image'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import Cookies from 'js-cookie'
+import { ShieldCheck, Eye, EyeOff } from 'lucide-react'
 
-
-
-const NAV_GROUPS = [
-  {
-    section: 'Main',
-    items: [
-      {
-        label: 'Overview', href: '/dashboard/student',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
-      },
-      {
-        label: 'Wellbeing Check', href: '/dashboard/student/assessment',
-        badge: 'New',
-        badgeStyle: 'bg-yellow-400/20 text-yellow-300',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M12 21C12 21 3 15.5 3 9.5C3 7.01 4.99 5 7.5 5C9.14 5 10.61 5.83 11.5 7.09C12.39 5.83 13.86 5 15.5 5C18.01 5 20 7.01 20 9.5C20 15.5 12 21 12 21Z"/></svg>
-      },
-      {
-        label: 'My Sessions', href: '/dashboard/student/sessions',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-      },
-      {
-        label: 'Message', href: '/dashboard/student/messages',
-        badge: '3',
-        badgeStyle: 'bg-red-500/20 text-red-400',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-      },
-      {
-        
-        label: 'Book', href: '/dashboard/student/book',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      },
-    ]
-  },
-  {
-    section: 'Support',
-    items: [
-      {
-        label: 'Resources', href: '/dashboard/student/resources',
-        icons: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
-      },
-      {
-        label: 'Anonymous Chat', href: '/dashboard/anonymous',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><line x1="18" y1="8" x2="18" y2="14" strokeDasharray="2 2"/></svg>
-      },
-    ],
-  },
-  {
-    section: 'Account',
-    items: [
-      {
-        label: 'My Profile', href: '/dashboard/student/profile',
-        icon:  <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-      },
-      {
-        label: 'Settings', href: '/dashboard/student/settings',
-        icons:  <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-      }
-    ]
-  }
+const SLIDES = [
+  { src: '/health1.jpg', alt: 'Mental health support' },
+  { src: '/health2.jpg', alt: 'Counselling session' },
+  { src: '/health3.jpg', alt: 'Student wellbeing' },
+  { src: '/health4.jpg', alt: 'Group support' },
+  { src: '/health9.png', alt: 'Yabatech campus' },
+  { src: '/health5.jpg', alt: 'Safe space' },
 ]
-export default function StudentSidebar(){
-  const pathname = usePathname();
-  const router = useRouter();
 
-  function handleLogout() {
-    Cookies.remove('access');
-    Cookies.remove('refresh'),
-    Cookies.remove('user');
-    router.push('/login')
+const TRUST_ITEMS = [
+  'Secure student login system',
+  'Encrypted counselling records',
+  'Anonymous support available',
+  'Free for all Yabatech students',
+]
+
+export default function StudentLoginPage() {
+  const router = useRouter()
+
+  const [identifier,   setIdentifier]   = useState('')
+  const [password,     setPassword]     = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [error,        setError]        = useState('')
+  const [loading,      setLoading]      = useState(false)
+  const [anonLoading,  setAnonLoading]  = useState(false)
+  const [current,      setCurrent]      = useState(0)
+
+  /* ── Slider ── */
+  const goTo = useCallback((index: number) => {
+    setCurrent((index + SLIDES.length) % SLIDES.length)
+  }, [])
+
+  useEffect(() => {
+    const t = setInterval(() => goTo(current + 1), 4500)
+    return () => clearInterval(t)
+  }, [current, goTo])
+
+  /* ── Login ── */
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    if (!identifier.trim() || !password) {
+      setError('Please fill in both fields.')
+      return
+    }
+    setLoading(true)
+    try {
+      const res  = await fetch('http://127.0.0.1:8000/api/auth/login/', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email: identifier, password }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setError(data.error || 'Invalid credentials.'); return }
+      if (data.user.role !== 'student') {
+        setError('Access denied. Student accounts only.')
+        return
+      }
+      Cookies.set('access',  data.tokens.access,          { expires: 1 })
+      Cookies.set('refresh', data.tokens.refresh,         { expires: 7 })
+      Cookies.set('user',    JSON.stringify(data.user),   { expires: 1 })
+      router.push('/dashboard/student')
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
-  return (
-    <aside className="hidden lg:flex w-[240px] shrink-0 flex-col bg-[#1a5c2a] overflow-hidden">
 
-      {/* HEADER */}
-      <div className="px-4 pt-[18px] pb-[14px] border-b border-white/[0.07]">
-        <div className="flex items-center gap-2.5 mb-3.5">
-          <Image src="/favicon.png" width={40} height={40} alt="Logo" />
-          <div className="leading-tight">
-            <p className="text-base font-semibold text-white">MindBridge</p>
-            <p className="text-xs text-white/40">Student Portal</p>
+  /* ── Anonymous ── */
+  async function handleAnonymous() {
+    setAnonLoading(true)
+    try {
+      Cookies.set('user', JSON.stringify({ role: 'anonymous' }), { expires: 1 })
+      router.push('/anonymous')
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setAnonLoading(false)
+    }
+  }
+
+  const inputCls =
+    'w-full h-11 border border-[#e2e8f0] rounded-[9px] px-3 text-[0.88rem] text-[#0e2318] bg-white ' +
+    'placeholder:text-[#b0bec5] outline-none transition-all duration-200 ' +
+    'focus:border-[#166534] focus:shadow-[0_0_0_3px_rgba(22,101,52,0.08)]'
+
+  return (
+    <div className="flex min-h-screen bg-white">
+
+      {/* ══════════════════════════════════════
+          LEFT PANEL — Image Slider (desktop)
+      ══════════════════════════════════════ */}
+      <div className="hidden lg:flex w-[44%] flex-shrink-0 relative overflow-hidden bg-[#071a0f]">
+
+        {/* Sliding images */}
+        {SLIDES.map((slide, i) => (
+          <div
+            key={slide.src}
+            className={`absolute inset-0 transition-opacity duration-[1200ms] ease-in-out ${
+              i === current ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            <Image
+              src={slide.src}
+              alt={slide.alt}
+              fill
+              loading='eager'
+              priority={i === 0}
+              className="object-cover"
+            />
+          </div>
+        ))}
+
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#071a0ff2] via-[#0e3320d5] to-[#071a0fec]" />
+
+        {/* Grain */}
+        <div
+          className="absolute inset-0 opacity-[0.035] pointer-events-none"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+          }}
+        />
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-between h-full px-10 py-10 w-full">
+
+          {/* Top */}
+          <div>
+            <Link href="/" className="flex items-center gap-[10px] no-underline mb-12">
+              <div
+                className="w-9 h-9 rounded-[9px] bg-gradient-to-br from-green-800 to-green-400 flex items-center justify-center text-white font-extrabold text-base flex-shrink-0"
+                style={{ fontFamily: 'Syne, sans-serif' }}
+              >
+                M
+              </div>
+              {/* Swap for real logo: <Image src="/favicon.png" width={36} height={36} alt="Logo" className="rounded-[9px]" /> */}
+              <div>
+                <span className="block text-[1rem] font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
+                  MindBridge
+                </span>
+                <span className="block text-[0.67rem] text-white/35">Yabatech Mental Health Platform</span>
+              </div>
+            </Link>
+
+            <div className="inline-flex items-center gap-2 bg-white/[0.06] border border-white/[0.1] text-yellow-300 text-[0.72rem] font-semibold tracking-widest uppercase px-3 py-1.5 rounded-full mb-6">
+              <span className="w-[5px] h-[5px] rounded-full bg-yellow-400 animate-pulse flex-shrink-0" />
+              Welcome back
+            </div>
+
+            <h2
+              className="text-[2rem] font-extrabold text-white leading-[1.2] tracking-tight mb-4"
+              style={{ fontFamily: 'Syne, sans-serif' }}
+            >
+              Your{' '}
+              <span className="text-yellow-400">wellbeing</span>
+              <br />journey continues.
+            </h2>
+
+            <p className="text-[0.85rem] text-white/50 leading-[1.75] mb-10 max-w-xs">
+              Sign in to access counselling, track your progress, and get the support you deserve.
+            </p>
+
+            {/* Trust list */}
+            <div className="flex flex-col gap-4">
+              {TRUST_ITEMS.map((item) => (
+                <div key={item} className="flex items-center gap-3">
+                  <span className="w-[7px] h-[7px] rounded-full bg-yellow-400/70 flex-shrink-0" />
+                  <span className="text-white/65 text-[0.83rem]">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Bottom — dots + copyright */}
+          <div className="flex flex-col gap-4">
+            <div className="flex gap-[8px]">
+              {SLIDES.map((_, i) => (
+                <button
+                  key={i}
+                  aria-label={`Slide ${i + 1}`}
+                  onClick={() => setCurrent(i)}
+                  className={`h-[3px] rounded-full border-none cursor-pointer transition-all duration-300 ${
+                    i === current ? 'bg-yellow-400 w-6' : 'bg-white/25 w-3'
+                  }`}
+                />
+              ))}
+            </div>
+            <p className="text-[0.72rem] text-white/25">© 2026 MindBridge · Yaba College of Technology</p>
           </div>
         </div>
       </div>
 
-      {/* NAV */}
-      <nav className="flex-1 overflow-y-auto py-2 [&::-webkit-scrollbar]:hidden">
-        {NAV_GROUPS.map(({ section, items }) => (
-          <div key={section} className="mb-1">
-            <p className="px-4 pt-3 pb-1 text-[11px] font-semibold text-white/25 uppercase tracking-[0.10em]">
-              {section}
-            </p>
-            {items.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`relative flex items-center gap-[10px] mx-2.5 px-3 py-2.5 rounded-md transition-all duration-150 my-1
-                    ${isActive ? 'bg-white/[0.12]' : 'hover:bg-white/[0.07]'}`}
-                >
-                  {isActive && (
-                    <span className="absolute -left-2.5 top-1/2 -translate-y-1/2 w-[3px] h-[18px] bg-yellow-400 rounded-r-full" />
-                  )}
-                  <span className={`transition-opacity ${isActive ? 'opacity-100 [&_svg]:stroke-white' : 'opacity-[0.55] [&_svg]:stroke-white'}`}>
-                    {item.icon}
-                  </span>
-                  <span className={`text-[13px] font-medium transition-all flex-1 ${isActive ? 'text-white' : 'text-white/60'}`}>
-                    {item.label}
-                  </span>
-                  {item.badge !== undefined && (
-                    <span className={`text-[10px] font-bold px-[6px] py-[2px] rounded-full ${item.badgeStyle}`}>
-                      {item.badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
+      {/* ══════════════════════════════════════
+          RIGHT PANEL — Login form
+      ══════════════════════════════════════ */}
+      <div className="flex-1 flex items-center justify-center px-5 py-12 sm:px-10 bg-white">
+        <div className="w-full max-w-[400px]">
 
-      {/* FOOTER */}
-      <div className="px-4 py-3 border-t border-white/[0.07] flex items-center justify-between">
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-[6px] px-2 py-1.5 -mx-2 rounded-md hover:bg-white/[0.07] transition-colors"
-        >
-          <svg className="w-[13px] h-[13px] stroke-white/35" viewBox="0 0 24 24" fill="none" strokeWidth="1.75">
-            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-          <span className="text-[11px] text-white/35">Sign out</span>
-        </button>
-        <span className="text-[9.5px] text-white/20">v1.0.0</span>
+          {/* Mobile logo */}
+          <div className="flex items-center gap-[10px] mb-8 lg:hidden">
+            <div
+              className="w-[34px] h-[34px] rounded-[9px] bg-gradient-to-br from-green-800 to-green-400 flex items-center justify-center text-white font-extrabold text-[15px] flex-shrink-0"
+              style={{ fontFamily: 'Syne, sans-serif' }}
+            >
+              M
+            </div>
+            <div>
+              <span className="block text-[0.95rem] font-bold text-[#0e2318]" style={{ fontFamily: 'Syne, sans-serif' }}>
+                MindBridge
+              </span>
+              <span className="block text-[0.65rem] text-[#7a9c8a]">Yabatech Mental Health Platform</span>
+            </div>
+          </div>
+
+          {/* Badge */}
+          <div className="inline-flex items-center gap-[6px] bg-green-50 border border-green-200 text-green-800 text-[0.72rem] font-semibold px-3 py-1 rounded-full mb-4">
+            <span className="w-[5px] h-[5px] rounded-full bg-green-700 flex-shrink-0" />
+            Student Portal
+          </div>
+
+          <h1
+            className="text-[1.75rem] font-extrabold text-[#0e2318] mb-1 tracking-tight"
+            style={{ fontFamily: 'Syne, sans-serif' }}
+          >
+            Sign in
+          </h1>
+          <p className="text-[0.83rem] text-[#7a9c8a] mb-6">
+            Access your counselling dashboard
+          </p>
+
+          {/* Error */}
+          {error && (
+            <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-[0.8rem] rounded-[10px] px-3 py-[10px] mb-4">
+              <span className="w-[6px] h-[6px] rounded-full bg-red-500 flex-shrink-0" />
+              {error}
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleLogin} className="flex flex-col gap-3">
+
+            {/* Identifier */}
+            <div className="flex flex-col gap-[5px]">
+              <label className="text-[0.75rem] font-medium text-[#4b7060]">
+                Matric number or email
+              </label>
+              <input
+                className={inputCls}
+                value={identifier}
+                onChange={(e) => { setIdentifier(e.target.value); setError('') }}
+                placeholder="P/ND/23/3210083 or you@yabatech.edu.ng"
+                autoComplete="username"
+              />
+            </div>
+
+            {/* Password */}
+            <div className="flex flex-col gap-[5px]">
+              <div className="flex items-center justify-between">
+                <label className="text-[0.75rem] font-medium text-[#4b7060]">Password</label>
+                <Link href="/forgot-password" className="text-[0.72rem] text-[#166534] hover:underline font-medium">
+                  Forgot password?
+                </Link>
+              </div>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  className={inputCls + ' pr-10'}
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); setError('') }}
+                  placeholder="Enter your password"
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#b0bec5] hover:text-[#4b7060] transition-colors bg-transparent border-none cursor-pointer p-0"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword
+                    ? <EyeOff size={16} strokeWidth={1.75} />
+                    : <Eye     size={16} strokeWidth={1.75} />
+                  }
+                </button>
+              </div>
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full h-11 bg-[#0e2318] text-white text-[0.92rem] font-bold rounded-[11px] border-none cursor-pointer mt-1
+                         hover:bg-[#1a3d29] hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(14,35,24,0.2)]
+                         disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0 transition-all duration-200"
+              style={{ fontFamily: 'Syne, sans-serif' }}
+            >
+              {loading ? 'Signing in…' : 'Sign in'}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-5">
+            <div className="h-px bg-[#f1f5f9] flex-1" />
+            <span className="text-[0.72rem] text-[#b0bec5]">or</span>
+            <div className="h-px bg-[#f1f5f9] flex-1" />
+          </div>
+
+          {/* Anonymous CTA */}
+          <button
+            onClick={handleAnonymous}
+            disabled={anonLoading}
+            className="w-full h-11 bg-transparent border border-[#d1fae5] text-[#166534] text-[0.88rem] font-medium rounded-[11px]
+                       hover:bg-green-50 hover:border-[#166534] disabled:opacity-60 disabled:cursor-not-allowed
+                       transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <ShieldCheck size={16} strokeWidth={1.75} />
+            {anonLoading ? 'Starting…' : 'Continue anonymously'}
+          </button>
+
+          {/* Footer links */}
+          <p className="text-center text-[0.8rem] text-[#7a9c8a] mt-6">
+            No account?{' '}
+            <Link href="/register" className="text-[#166534] font-medium hover:underline">
+              Create one free
+            </Link>
+          </p>
+        </div>
       </div>
-    </aside>
-  );
+    </div>
+  )
 }
