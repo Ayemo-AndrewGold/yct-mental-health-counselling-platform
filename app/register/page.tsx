@@ -105,7 +105,6 @@ export default function RegisterPage() {
     if (!form.level)                                      return 'Please select your level.'
     if (form.password.length < 8)                         return 'Password must be at least 8 characters.'
     if (form.password !== form.confirmPassword)           return 'Passwords do not match.'
-    if (!form.agreed)                                     return 'Please agree to the Privacy Policy and Terms of Service.'
     return ''
   }
 
@@ -399,7 +398,7 @@ export default function RegisterPage() {
             </div>
 
             {/* Terms */}
-            <div className="flex items-start gap-2 pt-1">
+            {/* <div className="flex items-start gap-2 pt-1">
               <input
                 id="agree" type="checkbox" checked={form.agreed}
                 onChange={(e) => update('agreed', e.target.checked)}
@@ -412,7 +411,7 @@ export default function RegisterPage() {
                 <Link href="/terms" className="text-[#166534] font-medium hover:underline">Terms of Service</Link>.
                 {' '}My data will be handled in accordance with NDPR 2019.
               </label>
-            </div>
+            </div> */}
 
             {/* Submit */}
             <button
