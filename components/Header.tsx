@@ -115,7 +115,7 @@ export default function Header() {
             </Link>
           )}
 
-        {/* Anonymous pill */}
+        {/* Sign Up */}
           <Link
             href="/register"
             className="inline-flex items-center gap-[6px] bg-white/[0.06] border border-white/10
@@ -161,11 +161,11 @@ export default function Header() {
 
           {/* Mobile actions */}
           <div className="flex flex-col gap-[10px] mt-4">
-            <Link href="/anonymous" onClick={() => setOpen(false)}>
+            <Link href="/register" onClick={() => setOpen(false)}>
               <div className="flex items-center justify-center gap-2 bg-white/[0.05] border border-white/10
                               text-white/60 text-[0.88rem] py-[11px] rounded-[10px] cursor-pointer">
                 <span className="w-[5px] h-[5px] bg-green-400 rounded-full animate-pulse" />
-                Anonymous Help
+                Sign Up
               </div>
             </Link>
 

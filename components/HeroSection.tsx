@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 
 const slides = [
   { src: '/health1.jpg', alt: 'Mental health support' },
@@ -62,7 +63,7 @@ export default function HeroSection() {
       />
 
       {/* ── Arrow Controls ── */}
-      <div className="absolute top-1/2 -translate-y-1/2 w-full flex justify-between px-5 z-20 pointer-events-none">
+      <div className=" hidden md:flex absolute top-1/2 -translate-y-1/2 w-full flex justify-between px-5 z-20 pointer-events-none">
         {(['prev', 'next'] as const).map((dir) => (
           <button
             key={dir}
@@ -79,8 +80,8 @@ export default function HeroSection() {
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 pt-24 pb-16 text-center">
 
         {/* Badge */}
-        <div className="inline-flex items-center gap-2 bg-white/[0.08] backdrop-blur-md border border-white/15 text-yellow-300 px-5 py-2 rounded-full text-sm font-medium tracking-wide mb-8">
-          <span className="w-[7px] h-[7px] bg-yellow-400 rounded-full animate-pulse" />
+        <div className="inline-flex items-center gap-1.5 md:gap-2 bg-white/[0.08] backdrop-blur-md border border-white/15 text-yellow-300 px-3 py-1.5 md:px-5 md:py-2 rounded-full text-xs md:text-sm font-medium tracking-wide mb-6 md:mb-8">
+          <span className="w-[5px] h-[5px] md:w-[7px] md:h-[7px] bg-yellow-400 rounded-full animate-pulse" />
           Yabatech Mental Health Platform
         </div>
 
@@ -96,22 +97,17 @@ export default function HeroSection() {
         {/* Subtext */}
         <p className="text-white/75 max-w-[540px] mb-10 font-light leading-7"
            style={{ fontSize: '1.1rem' }}>
-          Access counselling, track your wellbeing, and get support — all in one safe,
+          Access counselling, track your wellbeing, and get support all in one safe,
           confidential space built for you.
         </p>
 
         {/* CTAs */}
         <div className="flex flex-wrap justify-center gap-4 mb-14">
-          <a href="/register">
+          <Link href="/register">
             <button className="bg-yellow-400 text-[#071a0f] px-8 py-[14px] rounded-xl text-base font-semibold hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(251,191,36,0.4)] transition-all duration-200">
               Get Started Free
             </button>
-          </a>
-          <a href="/anonymous">
-            <button className="bg-transparent text-white px-8 py-[14px] rounded-xl text-base border border-white/30 hover:bg-white/10 backdrop-blur-md transition-all duration-200">
-              Anonymous Help
-            </button>
-          </a>
+          </Link>
         </div>
 
         {/* Stats */}

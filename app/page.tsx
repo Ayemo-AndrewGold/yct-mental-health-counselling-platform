@@ -7,8 +7,8 @@ import Testimony from '@/components/Testimony';
 import HeroSection from '@/components/HeroSection';
 import FeatureSection from '@/components/FeatureSection';
 import HowItWorkSection from '@/components/HowItWorkSection';
-import AnonymousSection from '@/components/AnonymousSection';
 import CTASection from '@/components/CTASection';
+import AnonymousSection from '@/components/AnonymousSection';
 
 
 export default function LandingPage() {
