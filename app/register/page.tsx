@@ -284,7 +284,7 @@ export default function RegisterPage() {
               <span className="block text-[1rem] font-bold text-[#0e2318]" style={{ fontFamily: 'Syne, sans-serif' }}>
                 MindBridge
               </span>
-              <span className="block text-[0.95rem] text-[#7a9c8a]">Yabatech Mental Health Platform</span>
+              <span className="block text-[0.75rem] text-[#7a9c8a]">Yabatech Mental Health Platform</span>
             </div>
           </div>
 
@@ -295,7 +295,7 @@ export default function RegisterPage() {
           </div>
 
           <h1
-            className="text-[2.2rem] font-extrabold text-[#0e2318] mb-[3px]"
+            className="text-[2rem] font-extrabold text-[#0e2318] mb-[3px]"
             style={{ fontFamily: 'Syne, sans-serif' }}
           >
             Create your account

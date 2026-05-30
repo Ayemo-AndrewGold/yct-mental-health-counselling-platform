@@ -31,12 +31,6 @@ export default function CTASection() {
                   Create Account
                 </button>
               </a>
-              <a href="/anonymous">
-                <button className="bg-transparent text-white/75 px-7 py-3 rounded-xl text-[0.95rem]
-                                   border border-white/[0.18] hover:border-white/40 hover:text-white transition-all duration-200">
-                  Anonymous Help
-                </button>
-              </a>
             </div>
           </div>
 
