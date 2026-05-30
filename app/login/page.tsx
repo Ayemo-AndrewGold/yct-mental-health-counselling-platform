@@ -74,7 +74,7 @@ export default function StudentLoginPage() {
         data.message || 'Login successful'
       )
 
-      router.push('/dashboard/student')
+      window.location.href = '/dashboard/student'
     } catch {
       toast.error('Unable to connect to the server. Please check your internet connection and try again.')
     } finally {
