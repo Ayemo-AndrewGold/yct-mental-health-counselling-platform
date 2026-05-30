@@ -239,7 +239,7 @@ export default function StudentLoginPage() {
 
           {/* Error */}
           {error && (
-            <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-[0.10rem] rounded-[10px] px-3 py-[10px] mb-4">
+            <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-[0.77rem] rounded-[10px] px-3 py-[10px] mb-4">
               <span className="w-[6px] h-[6px] rounded-full bg-red-500 flex-shrink-0" />
               {error}
             </div>
