@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react'; 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Cookies from 'js-cookie'
 import { getMe, getAppointments } from '@/lib/api';
 
-//---------------- TYPES----------------
 interface User {
   full_name: string;
   email: string;
@@ -24,16 +23,15 @@ interface Appointment {
   duration?: number;
 }
 
-// -----------QUICK ACTION CARD----------------
 function QuickAction({
-   icon, label, desc, href, color
+  icon, label, desc, href, color
 }: {
   icon: React.ReactNode;
   label: string;
-  desc: string
+  desc: string;
   href: string;
   color: string;
-})  {
+}) {
   return (
     <Link href={href} className="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-md transition-all duration-200 group flex flex-col gap-3">
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>
@@ -53,8 +51,6 @@ function QuickAction({
   );
 }
 
-// ---------------------------------STAT CARD-------------------
-
 function StatCard({ label, value, sub, accent }: {
   label: string; value: string; sub: string; accent: string;
 }) {
@@ -68,7 +64,6 @@ function StatCard({ label, value, sub, accent }: {
   );
 }
 
-//---------------------------WELLSEING SCORE RING----------
 function WellbeingRing({ score }: { score: number }) {
   const radius = 36;
   const circumference = 2 * Math.PI * radius;
@@ -85,63 +80,58 @@ function WellbeingRing({ score }: { score: number }) {
           strokeLinecap="round"
           transform="rotate(-90 48 48)"
         />
-        <text x="48" y="53" textAnchor="middle" className="text-2xl font-bold" fill="#1a5c2a" fontSize="20" fontWeight="700">
+        <text x="48" y="53" textAnchor="middle" fill="#1a5c2a" fontSize="20" fontWeight="700">
           {score}
         </text>
       </svg>
-      <p className="text-[11px] text-gray-500 mt-1">Wellbeing Score</p>
+      <p className="text-[11px] text-white/60 mt-1">Wellbeing Score</p>
     </div>
   );
 }
 
-// -----------------MAIN PAGE-------------------
-export default function OverviewPage(){
+export default function OverviewPage() {
   const [user, setUser] = useState<User | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
 
-useEffect(()=> {
- //Load from cookies first 
- const stored = Cookies.get('user');
- if (stored) setUser(JSON.parse(stored));
+  useEffect(() => {
+    const stored = Cookies.get('user');
+    if (stored) setUser(JSON.parse(stored));
 
- //Then fetch fresh from backend
- getMe().then((data) =>{
-  if (data) {
-    setUser(data);
-    Cookies.set('user', JSON.stringify(data), { expires: 1 });
+    getMe().then((data) => {
+      if (data) {
+        setUser(data);
+        Cookies.set('user', JSON.stringify(data), { expires: 1 });
+      }
+    });
+
+    getAppointments().then((data) => {
+      setAppointments(data);
+    });
+  }, []);
+
+  function formatDate(dateStr: string) {
+    return new Date(dateStr).toLocaleDateString('en-GB', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    });
   }
- });
 
- getAppointments().then((data) => {
-  setAppointments(data)
- });
-}, []);
+  function formatTime(timeStr: string) {
+    const [h, m] = timeStr.split(':');
+    const hour = parseInt(h);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+    return `${displayHour}:${m} ${ampm}`;
+  }
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('en-GB', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  });
-}
-
-function formatTime(timeStr: string) {
-  const [h, m] = timeStr.split(':');
-  const hour = parseInt(h);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
-  return `${displayHour}:${m} ${ampm}`;
-}
-
-const upcomingAppointments = appointments.filter(
-  a => a.status === 'Confirmed' || a.status === 'Pending'
-);
-
-const nextAppointment = upcomingAppointments[0] ?? null;
-
-const firstName = user?.full_name?.split(' ')[0] ?? 'Student';
-
+  const upcomingAppointments = appointments.filter(
+    a => a.status === 'Confirmed' || a.status === 'Pending'
+  );
+  const nextAppointment = upcomingAppointments[0] ?? null;
+  const firstName = user?.full_name?.split(' ')[0] ?? 'Student';
 
   return (
-    <div className="px-6 py-5 space-y-5">
+    // ✅ Responsive horizontal padding — tight on mobile, comfortable on desktop
+    <div className="px-3 sm:px-5 md:px-6 py-5 space-y-5 min-w-0">
 
       {/* PAGE TITLE */}
       <div>
@@ -154,7 +144,8 @@ const firstName = user?.full_name?.split(' ')[0] ?? 'Student';
       </div>
 
       {/* WELCOME BANNER */}
-      <div className="bg-[#1a5c2a] rounded-2xl px-6 py-5 flex items-center justify-between">
+      {/* ✅ Stacks vertically on mobile, side-by-side on sm+ */}
+      <div className="bg-[#1a5c2a] rounded-2xl px-4 sm:px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <p className="text-[10px] font-bold text-yellow-400 uppercase tracking-[0.08em] mb-1">
             Welcome back
@@ -166,13 +157,15 @@ const firstName = user?.full_name?.split(' ')[0] ?? 'Student';
             Your wellbeing matters. Take a quick assessment or book a session with a counsellor.
           </p>
         </div>
-        <div className="hidden md:block">
+        {/* ✅ Ring visible on sm+ instead of md+ so it shows sooner */}
+        <div className="hidden sm:block shrink-0">
           <WellbeingRing score={72} />
         </div>
       </div>
 
       {/* STAT CARDS */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+      {/* ✅ 1 col on mobile → 2 col on sm → 4 col on xl */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
         <StatCard
           label="Sessions Attended"
           value={String(appointments.filter(a => a.status === 'Completed').length)}
@@ -202,7 +195,8 @@ const firstName = user?.full_name?.split(' ')[0] ?? 'Student';
       {/* QUICK ACTIONS */}
       <div>
         <h3 className="text-[13px] font-semibold text-gray-700 mb-3">Quick Actions</h3>
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+        {/* ✅ 1 col on mobile → 2 col on sm → 4 col on xl */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
           <QuickAction
             href="/dashboard/student/assessment"
             color="bg-[#e8f5ec]"
@@ -254,18 +248,25 @@ const firstName = user?.full_name?.split(' ')[0] ?? 'Student';
         </div>
       </div>
 
-      {/* BOTTOM ROW — UPCOMING + RESOURCES */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      {/* BOTTOM ROW */}
+      {/* ✅ Stacks on mobile, side-by-side from md+ */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
         {/* Upcoming appointment */}
-        <div className="px-5 py-4">
+        <div className="bg-white border border-gray-100 rounded-2xl px-5 py-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-[13px] font-semibold text-gray-900">Next Appointment</h2>
+            <Link href="/dashboard/student/appointments" className="text-[11.5px] text-[#1a5c2a] font-medium hover:underline">
+              View all →
+            </Link>
+          </div>
           {nextAppointment ? (
             <div className="flex items-start gap-4 p-4 bg-[#e8f5ec] border border-[#b6dfc0] rounded-xl">
               <div className="w-10 h-10 rounded-xl bg-[#1a5c2a] flex items-center justify-center text-white text-[11px] font-bold shrink-0">
                 {new Date(nextAppointment.date).getDate()}
               </div>
-              <div className="flex-1">
-                <p className="text-[13px] font-semibold text-gray-900">
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold text-gray-900 truncate">
                   Session with {nextAppointment.counsellor_name}
                 </p>
                 <p className="text-[11px] text-gray-500 mt-0.5">
@@ -275,12 +276,12 @@ const firstName = user?.full_name?.split(' ')[0] ?? 'Student';
                   {nextAppointment.session_type} · {nextAppointment.duration ?? 45} min
                 </p>
               </div>
-              <span className="text-[10px] font-semibold px-2 py-1 bg-[#1a5c2a] text-white rounded-full">
+              <span className="text-[10px] font-semibold px-2 py-1 bg-[#1a5c2a] text-white rounded-full shrink-0">
                 {nextAppointment.status}
               </span>
             </div>
           ) : (
-            <div className="text-center py-4">
+            <div className="text-center py-6">
               <p className="text-[12px] text-gray-400">No upcoming appointments.</p>
               <Link href="/dashboard/student/book" className="text-[12px] text-[#1a5c2a] hover:underline mt-1 inline-block">
                 Book one →
@@ -290,7 +291,7 @@ const firstName = user?.full_name?.split(' ')[0] ?? 'Student';
           {upcomingAppointments.length > 1 && (
             <p className="text-[11px] text-gray-400 mt-3 text-center">
               +{upcomingAppointments.length - 1} more upcoming.{' '}
-              <Link href="/dashboard/student/sessions" className="text-[#1a5c2a] hover:underline">
+              <Link href="/dashboard/student/appointments" className="text-[#1a5c2a] hover:underline">
                 View all
               </Link>
             </p>
@@ -307,23 +308,24 @@ const firstName = user?.full_name?.split(' ')[0] ?? 'Student';
           </div>
           <div className="px-5 divide-y divide-gray-50">
             {[
-              { title: 'Managing Exam Anxiety', tag: 'Anxiety', color: 'bg-blue-50 text-blue-700' },
+              { title: 'Managing Exam Anxiety',    tag: 'Anxiety',    color: 'bg-blue-50 text-blue-700' },
               { title: 'Understanding Depression', tag: 'Depression', color: 'bg-purple-50 text-purple-700' },
-              { title: 'Sleep & Mental Health', tag: 'Wellness', color: 'bg-green-50 text-green-700' },
-              { title: 'Stress Management Tips', tag: 'Stress', color: 'bg-orange-50 text-orange-700' },
+              { title: 'Sleep & Mental Health',    tag: 'Wellness',   color: 'bg-green-50 text-green-700' },
+              { title: 'Stress Management Tips',   tag: 'Stress',     color: 'bg-orange-50 text-orange-700' },
             ].map((r) => (
               <div key={r.title} className="flex items-center justify-between py-3 group">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0">
                   <div className="w-7 h-7 rounded-lg bg-[#e8f5ec] flex items-center justify-center shrink-0">
                     <svg className="w-3.5 h-3.5 stroke-[#1a5c2a]" viewBox="0 0 24 24" fill="none" strokeWidth="2">
-                      <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+                      <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
+                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
                     </svg>
                   </div>
-                  <p className="text-[12px] font-medium text-gray-800 group-hover:text-[#1a5c2a] transition-colors">
+                  <p className="text-[12px] font-medium text-gray-800 group-hover:text-[#1a5c2a] transition-colors truncate">
                     {r.title}
                   </p>
                 </div>
-                <span className={`text-[10px] font-semibold px-2 py-[2px] rounded-full ${r.color}`}>
+                <span className={`text-[10px] font-semibold px-2 py-[2px] rounded-full shrink-0 ml-2 ${r.color}`}>
                   {r.tag}
                 </span>
               </div>
