@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import toast, { Toast } from 'react-hot-toast'
 
 const DEPARTMENTS = [
   'Computer Technology',
@@ -111,7 +112,7 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const err = validate()
-    if (err) { setError(err); return }
+    if (err) { toast.error(err); return }
     setLoading(true)
     try {
       const res = await fetch('http://127.0.0.1:8000/api/auth/register/', {
@@ -128,10 +129,10 @@ export default function RegisterPage() {
         }),
       })
       const data = await res.json()
-      if (!res.ok) { setError(data.message || 'Registration failed. Please try again.'); return }
+      if (!res.ok) { toast.error(data.message || 'Registration failed. Please try again.'); return }
       router.push('/login')
     } catch {
-      setError('Something went wrong. Please try again.')
+      toast.error('Unable to connect to the server. Please check your internet connection and try again.')
     } finally {
       setLoading(false)
     }

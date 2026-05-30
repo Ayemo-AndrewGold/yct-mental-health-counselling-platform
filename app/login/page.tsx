@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Cookies from 'js-cookie'
 import { ShieldCheck, Eye, EyeOff } from 'lucide-react'
+import toast, { Toast } from "react-hot-toast"
 
 const SLIDES = [
   { src: '/health1.jpg', alt: 'Mental health support' },
@@ -49,7 +50,7 @@ export default function StudentLoginPage() {
     e.preventDefault()
     setError('')
     if (!identifier.trim() || !password) {
-      setError('Please fill in both fields.')
+      toast.error('Please fill in both fields.')
       return
     }
     setLoading(true)
@@ -60,17 +61,25 @@ export default function StudentLoginPage() {
         body:    JSON.stringify({ email: identifier, password }),
       })
       const data = await res.json()
-      if (!res.ok) { setError(data.error || 'Invalid credentials.'); return }
+      if (!res.ok) { toast.error(data.error || 'Invalid credentials.'); return }
       if (data.user.role !== 'student') {
-        setError('Access denied. Student accounts only.')
+        toast.error('Access denied. Student accounts only.')
         return
       }
       Cookies.set('access',  data.tokens.access,          { expires: 1 })
       Cookies.set('refresh', data.tokens.refresh,         { expires: 7 })
       Cookies.set('user',    JSON.stringify(data.user),   { expires: 1 })
-      router.push('/dashboard/student')
+      
+      toast.success(
+        data.message || 'Login successful'
+      )
+
+      setTimeout(() => {
+        router.push('/dashboard/student')
+      })
+      
     } catch {
-      setError('Something went wrong. Please try again.')
+      toast.error('Unable to connect to the server. Please try again shortly.')
     } finally {
       setLoading(false)
     }
@@ -83,7 +92,7 @@ export default function StudentLoginPage() {
       Cookies.set('user', JSON.stringify({ role: 'anonymous' }), { expires: 1 })
       router.push('/anonymous')
     } catch {
-      setError('Something went wrong. Please try again.')
+      toast.error('Something went wrong. Please try again.')
     } finally {
       setAnonLoading(false)
     }
@@ -238,12 +247,12 @@ export default function StudentLoginPage() {
           </p>
 
           {/* Error */}
-          {error && (
+          {/* {error && (
             <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-[0.77rem] rounded-[10px] px-3 py-[10px] mb-4">
               <span className="w-[6px] h-[6px] rounded-full bg-red-500 flex-shrink-0" />
               {error}
             </div>
-          )}
+          )} */}
 
           {/* Form */}
           <form onSubmit={handleLogin} className="flex flex-col gap-3">
