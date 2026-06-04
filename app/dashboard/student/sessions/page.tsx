@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getAppointments, cancelAppointment } from '@/lib/api';
+import { Plus, Clock } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
 // ─────────────────────────────────────────────────────────────────────────────
-type SessionStatus = 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled';
+type SessionStatus    = 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled';
 type ActualSessionType = 'Physical' | 'Video' | 'Chat';
-type FilterStatus  = 'All' | SessionStatus;
+type FilterStatus     = 'All' | SessionStatus;
 
 interface Session {
   id: number;
@@ -26,8 +27,7 @@ interface Session {
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 function formatDate(dateStr: string) {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-GB', {
+  return new Date(dateStr).toLocaleDateString('en-GB', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   });
 }
@@ -44,27 +44,29 @@ function formatTime(timeStr: string) {
 // BADGES
 // ─────────────────────────────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: SessionStatus }) {
-  const map: Record<SessionStatus, string> = {
-    Pending:   'bg-amber-50 text-amber-700',
-    Confirmed: 'bg-blue-50 text-blue-700',
-    Completed: 'bg-green-50 text-green-700',
-    Cancelled: 'bg-red-50 text-red-600',
+  const map: Record<SessionStatus, React.CSSProperties> = {
+    Pending:   { background: '#fdf6e8', color: '#854F0B', border: '1px solid #f0d08a' },
+    Confirmed: { background: '#eef5fd', color: '#185FA5', border: '1px solid #b3d3f5' },
+    Completed: { background: '#008751', color: '#fff' },
+    Cancelled: { background: '#fdf0f0', color: '#A32D2D', border: '1px solid #f5bebe' },
   };
   return (
-    <span className={`text-[10px] font-semibold px-2 py-[3px] rounded-full ${map[status]}`}>
+    <span className="text-[10px] font-bold px-2.5 py-[3px] rounded-full"
+      style={map[status]}>
       {status}
     </span>
   );
 }
 
 function TypeBadge({ type }: { type: ActualSessionType }) {
-  const map: Record<ActualSessionType, string> = {
-    Physical: 'bg-[#e8f5ec] text-[#1a5c2a]',
-    Video:    'bg-purple-50 text-purple-700',
-    Chat:     'bg-orange-50 text-orange-700',
+  const map: Record<ActualSessionType, React.CSSProperties> = {
+    Physical: { background: 'rgba(0,135,81,0.12)', color: '#008751' },
+    Video:    { background: '#f3f1fe', color: '#7F77DD' },
+    Chat:     { background: '#fdf6e8', color: '#BA7517' },
   };
   return (
-    <span className={`text-[10px] font-medium px-2 py-[3px] rounded-md ${map[type]}`}>
+    <span className="text-[10px] font-600 px-2.5 py-[3px] rounded-full"
+      style={map[type]}>
       {type}
     </span>
   );
@@ -74,10 +76,9 @@ function TypeBadge({ type }: { type: ActualSessionType }) {
 // SESSION CARD
 // ─────────────────────────────────────────────────────────────────────────────
 function SessionCard({ session, onCancel }: {
-  session: Session;
-  onCancel: (id: number) => void;
+  session: Session; onCancel: (id: number) => void;
 }) {
-  const [expanded, setExpanded]     = useState(false);
+  const [expanded,   setExpanded]   = useState(false);
   const [cancelling, setCancelling] = useState(false);
 
   async function handleCancel() {
@@ -87,67 +88,82 @@ function SessionCard({ session, onCancel }: {
   }
 
   const initials = session.counsellor_name
-    .split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
+    .split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
 
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-sm transition-shadow">
-      <div className="p-5">
-        <div className="flex items-start gap-4">
+    <div
+      className="relative rounded-[20px] p-5 overflow-hidden transition-all duration-200 hover:-translate-y-[2px]"
+      style={{ background: '#f0faf4', border: '1px solid #b6e6cc' }}
+      onMouseEnter={e => e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,135,81,0.10)'}
+      onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
+    >
+      {/* Deco */}
+      <div className="absolute bottom-[-20px] right-[-20px] w-[80px] h-[80px] rounded-full pointer-events-none opacity-[0.05]"
+        style={{ background: '#008751' }} />
 
-          {/* Avatar */}
-          <div className="w-10 h-10 rounded-full bg-[#1a5c2a] flex items-center justify-center text-white text-[11px] font-bold shrink-0">
-            {initials}
+      <div className="flex items-start gap-3.5">
+
+        {/* Avatar */}
+        <div className="w-[42px] h-[42px] rounded-full flex items-center justify-center text-white text-[12px] font-bold shrink-0"
+          style={{ background: '#008751', border: '2px solid rgba(0,135,81,0.2)' }}>
+          {initials}
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <p className="text-[14px] font-bold mb-1.5" style={{ color: '#1a3d1f' }}>
+            {session.counsellor_name}
+          </p>
+          <div className="flex items-center gap-1.5 flex-wrap mb-2">
+            <StatusBadge status={session.status} />
+            <TypeBadge   type={session.session_type} />
           </div>
-
-          {/* Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              <p className="text-[13px] font-semibold text-gray-900">{session.counsellor_name}</p>
-              <TypeBadge type={session.session_type} />
-              <StatusBadge status={session.status} />
-            </div>
-            <p className="text-[11px] text-gray-400 mt-1">
-              {formatDate(session.date)} · {formatTime(session.time)} · {session.duration ?? 45} min
-            </p>
-            {session.note && (
-              <p className="text-[11px] text-gray-500 mt-1 italic">
-                Note: {session.note}
-              </p>
-            )}
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-2 shrink-0">
-            {(session.status === 'Pending' || session.status === 'Confirmed') && (
-              <button
-                onClick={handleCancel}
-                disabled={cancelling}
-                className="h-8 px-3 border border-red-200 text-red-600 rounded-lg text-[11px] font-medium hover:bg-red-50 disabled:opacity-50 transition"
-              >
-                {cancelling ? 'Cancelling...' : 'Cancel'}
-              </button>
-            )}
-            {session.status === 'Completed' && session.note && (
-              <button
-                onClick={() => setExpanded(!expanded)}
-                className="h-8 px-3 border border-gray-200 text-gray-600 rounded-lg text-[11px] font-medium hover:bg-gray-50 transition"
-              >
-                {expanded ? 'Hide Notes' : 'View Notes'}
-              </button>
-            )}
+          <div className="flex items-center gap-1.5 text-[11px]" style={{ color: '#3B6D11' }}>
+            <Clock size={11} />
+            {formatDate(session.date)} · {formatTime(session.time)} · {session.duration ?? 45} min
           </div>
         </div>
 
-        {/* Expanded notes */}
-        {expanded && session.note && (
-          <div className="mt-4 pt-4 border-t border-gray-50">
-            <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-              Session Notes
-            </p>
-            <p className="text-[12px] text-gray-700 leading-relaxed">{session.note}</p>
-          </div>
-        )}
+        {/* Actions */}
+        <div className="flex items-center gap-2 shrink-0">
+          {(session.status === 'Pending' || session.status === 'Confirmed') && (
+            <button
+              onClick={handleCancel}
+              disabled={cancelling}
+              className="px-3.5 py-[6px] rounded-full text-[11px] font-600 transition-all disabled:opacity-50"
+              style={{ background: '#fdf0f0', border: '1px solid #f5bebe', color: '#A32D2D' }}
+              onMouseEnter={e => e.currentTarget.style.background = '#fbd5d5'}
+              onMouseLeave={e => e.currentTarget.style.background = '#fdf0f0'}
+            >
+              {cancelling ? 'Cancelling…' : 'Cancel'}
+            </button>
+          )}
+          {session.status === 'Completed' && session.note && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="px-3.5 py-[6px] rounded-full text-[11px] font-600 transition-all"
+              style={{ background: '#f0faf4', border: '1px solid #b6e6cc', color: '#008751' }}
+              onMouseEnter={e => e.currentTarget.style.background = '#d9f2e6'}
+              onMouseLeave={e => e.currentTarget.style.background = '#f0faf4'}
+            >
+              {expanded ? 'Hide Notes' : 'View Notes'}
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Expanded notes */}
+      {expanded && session.note && (
+        <>
+          <div className="h-px my-4" style={{ background: '#b6e6cc' }} />
+          <p className="text-[10px] font-bold uppercase tracking-[0.1em] mb-1.5" style={{ color: '#3B6D11' }}>
+            Session Notes
+          </p>
+          <p className="text-[12px] leading-relaxed" style={{ color: '#1a3d1f' }}>
+            {session.note}
+          </p>
+        </>
+      )}
     </div>
   );
 }
@@ -157,30 +173,23 @@ function SessionCard({ session, onCancel }: {
 // ─────────────────────────────────────────────────────────────────────────────
 export default function SessionsPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [filter, setFilter]     = useState<FilterStatus>('All');
+  const [loading,  setLoading]  = useState(true);
+  const [filter,   setFilter]   = useState<FilterStatus>('All');
 
   const filters: FilterStatus[] = ['All', 'Pending', 'Confirmed', 'Completed', 'Cancelled'];
 
   useEffect(() => {
-    getAppointments().then((data) => {
-      setSessions(data);
-      setLoading(false);
-    });
+    getAppointments().then((data) => { setSessions(data); setLoading(false); });
   }, []);
 
   async function handleCancel(id: number) {
     const res = await cancelAppointment(id);
     if (res.ok) {
-      setSessions((prev) =>
-        prev.map((s) => s.id === id ? { ...s, status: 'Cancelled' as const } : s)
-      );
+      setSessions(prev => prev.map(s => s.id === id ? { ...s, status: 'Cancelled' as const } : s));
     }
   }
 
-  const filtered = filter === 'All'
-    ? sessions
-    : sessions.filter((s) => s.status === filter);
+  const filtered = filter === 'All' ? sessions : sessions.filter(s => s.status === filter);
 
   const counts = {
     Pending:   sessions.filter(s => s.status === 'Pending').length,
@@ -189,89 +198,110 @@ export default function SessionsPage() {
     Cancelled: sessions.filter(s => s.status === 'Cancelled').length,
   };
 
+  const STAT_CARDS = [
+    { label: 'Pending',   value: counts.Pending,   bg: '#fdf6e8', border: '#f0d08a', val: '#412402', lbl: '#854F0B', deco: '#BA7517' },
+    { label: 'Confirmed', value: counts.Confirmed, bg: '#eef5fd', border: '#b3d3f5', val: '#0c2f52', lbl: '#185FA5', deco: '#378ADD' },
+    { label: 'Completed', value: counts.Completed, bg: '#f0faf4', border: '#b6e6cc', val: '#1a3d1f', lbl: '#3B6D11', deco: '#008751' },
+    { label: 'Cancelled', value: counts.Cancelled, bg: '#fdf0f0', border: '#f5bebe', val: '#501313', lbl: '#A32D2D', deco: '#E24B4A' },
+  ];
+
   return (
     <div className="px-6 py-5 pb-10">
 
-      {/* Header */}
+      {/* ── Page Header ── */}
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h2 className="text-[18px] font-semibold text-gray-900 tracking-[-0.4px]">My Sessions</h2>
-          <p className="text-[12px] text-gray-500 mt-0.5">View and manage your counselling sessions</p>
+          <h2 className="text-[30px] font-bold" style={{ color: '#1a3d1f' }}>My Sessions</h2>
+          <p className="text-[16px] mt-0.5" style={{ color: '#3B6D11' }}>
+            View and manage your counselling sessions
+          </p>
         </div>
         <Link
           href="/dashboard/student/book"
-          className="flex items-center gap-1.5 h-9 bg-[#1a5c2a] hover:bg-[#2d7a3e] text-white px-4 rounded-xl text-[12px] font-medium transition"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-white text-[14px] font-bold transition-opacity hover:opacity-90"
+          style={{ background: '#008751' }}
         >
-          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          Book New
+          <Plus size={15} /> Book New
         </Link>
       </div>
 
-      {/* Stat cards */}
+      {/* ── Stat Cards ── */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-5">
-        {[
-          { label: 'Pending',   value: counts.Pending,   color: 'bg-amber-400'  },
-          { label: 'Confirmed', value: counts.Confirmed, color: 'bg-blue-400'   },
-          { label: 'Completed', value: counts.Completed, color: 'bg-[#1a5c2a]'  },
-          { label: 'Cancelled', value: counts.Cancelled, color: 'bg-red-400'    },
-        ].map((s) => (
-          <div key={s.label} className="bg-white border border-gray-100 rounded-2xl p-4 relative overflow-hidden">
-            <div className={`absolute top-0 left-0 right-0 h-[2px] ${s.color}`} />
-            <p className="text-[24px] font-bold text-gray-900">{s.value}</p>
-            <p className="text-[11px] text-gray-500 mt-0.5">{s.label}</p>
+        {STAT_CARDS.map(s => (
+          <div
+            key={s.label}
+            className="relative rounded-[20px] p-5 overflow-hidden transition-all duration-200 hover:-translate-y-[2px]"
+            style={{ background: s.bg, border: `1px solid ${s.border}` }}
+          >
+            <div className="absolute bottom-[-18px] right-[-18px] w-[64px] h-[64px] rounded-full opacity-[0.10]"
+              style={{ background: s.deco }} />
+            <p className="text-[34px] font-bold leading-none mb-1.5" style={{ color: s.val }}>
+              {s.value}
+            </p>
+            <p className="text-[13px] font-bold uppercase tracking-[0.08em]" style={{ color: s.lbl }}>
+              {s.label}
+            </p>
           </div>
         ))}
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex gap-2 mb-4">
-        {filters.map((f) => (
+      {/* ── Filter tabs ── */}
+      <div className="flex gap-2 flex-wrap mb-5">
+        {filters.map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`h-8 px-4 rounded-xl text-[12px] font-medium transition-all
-              ${filter === f
-                ? 'bg-[#1a5c2a] text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:border-[#1a5c2a]'}`}
+            className="px-4 py-[6px] rounded-full text-[12px] font-semibold transition-all duration-150"
+            style={filter === f
+              ? { background: '#008751', color: '#fff', border: '1px solid #008751' }
+              : { background: '#f0faf4', border: '1px solid #b6e6cc', color: '#3B6D11' }
+            }
+            onMouseEnter={e => { if (filter !== f) e.currentTarget.style.borderColor = '#008751'; }}
+            onMouseLeave={e => { if (filter !== f) e.currentTarget.style.borderColor = '#b6e6cc'; }}
           >
             {f}
           </button>
         ))}
       </div>
 
-      {/* Sessions list */}
+      {/* ── Sessions list ── */}
       {loading ? (
         <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white border border-gray-100 rounded-2xl p-5 animate-pulse">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="rounded-[20px] p-5 animate-pulse"
+              style={{ background: '#f0faf4', border: '1px solid #b6e6cc' }}>
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-gray-200" />
+                <div className="w-10 h-10 rounded-full" style={{ background: '#b6e6cc' }} />
                 <div className="flex-1 space-y-2">
-                  <div className="h-3 w-40 bg-gray-200 rounded" />
-                  <div className="h-2.5 w-56 bg-gray-100 rounded" />
+                  <div className="h-3 w-40 rounded" style={{ background: '#b6e6cc' }} />
+                  <div className="h-2.5 w-56 rounded" style={{ background: '#d1f0e0' }} />
                 </div>
               </div>
             </div>
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white border border-gray-100 rounded-2xl p-8 text-center">
-          <p className="text-[12px] text-gray-400">
-            No {filter.toLowerCase()} sessions found.
+        <div className="rounded-[20px] p-10 text-center"
+          style={{ background: '#f0faf4', border: '1px solid #b6e6cc' }}>
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4"
+            style={{ background: 'rgba(0,135,81,0.1)' }}>
+            <Clock size={20} style={{ color: '#008751' }} />
+          </div>
+          <p className="text-[18px] font-bold mb-1" style={{ color: '#1a3d1f' }}>
+            No {filter.toLowerCase()} sessions
           </p>
-          <Link
-            href="/dashboard/student/book"
-            className="inline-block mt-3 text-[12px] text-[#1a5c2a] font-medium hover:underline"
-          >
-            Book a session →
+          <p className="text-[15px] mb-4" style={{ color: '#3B6D11' }}>
+            {filter === 'All' ? "You haven't booked any sessions yet." : `No sessions with status "${filter}".`}
+          </p>
+          <Link href="/dashboard/student/book"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-white text-[15px] font-bold"
+            style={{ background: '#008751' }}>
+            <Plus size={15} /> Book a session
           </Link>
         </div>
       ) : (
         <div className="space-y-3">
-          {filtered.map((s) => (
+          {filtered.map(s => (
             <SessionCard key={s.id} session={s} onCancel={handleCancel} />
           ))}
         </div>

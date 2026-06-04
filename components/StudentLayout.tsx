@@ -41,16 +41,21 @@ export default function PortalLayout({
   }, []);
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${
-      isDarkMode
-        ? 'bg-gradient-to-b from-gray-800 via-gray-900 to-gray-800'
-        : 'bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50'
-    }`}>
+    <div
+      className="min-h-screen transition-colors duration-300"
+      style={{
+        background: isDarkMode
+          // ── DARK: deep green (matches the header overlay) ──
+          ? 'linear-gradient(160deg, #001a0e 0%, #002814 50%, #001a0e 100%)'
+          // ── LIGHT: clean white → very light gray ──
+          : 'linear-gradient(160deg, #ffffff 0%, #f3f4f6 60%, #ffffff 100%)',
+      }}
+    >
 
       {/* Fixed sidebar — outside flow */}
       <StudentSidebar />
 
-      {/* ✅ Everything else shifts right together */}
+      {/* Everything else shifts right together */}
       <div
         className={`flex flex-col min-h-screen transition-all duration-300 ease-in-out
           ml-0
@@ -61,11 +66,16 @@ export default function PortalLayout({
         <StudentHeader />
 
         {/* Main content */}
-        <main className="flex-1">
+        <main className="flex-1 pt-0">
           <div className="max-w-[1600px] mx-auto">
-            <div className={`min-h-[calc(100vh-4rem)] transition-colors duration-300 ${
-              isDarkMode ? 'bg-gray-900/60' : 'bg-white/50'
-            }`}>
+            <div
+              className="min-h-[calc(100vh-4.25rem)] transition-colors duration-300"
+              style={{
+                background: isDarkMode
+                  ? 'rgba(0,30,15,0.55)'   // subtle dark-green tint over the gradient
+                  : 'rgba(255,255,255,0.6)', // slight white wash on light
+              }}
+            >
               {children}
             </div>
           </div>

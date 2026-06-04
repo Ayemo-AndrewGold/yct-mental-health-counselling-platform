@@ -3,16 +3,16 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getCounsellors, bookAppointment } from '@/lib/api';
+import Cookies from 'js-cookie'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
 // ─────────────────────────────────────────────────────────────────────────────
 interface Counsellor {
-  id: string;
+  id: number;
   full_name: string;
   email: string;
   department: string;
- 
 }
 
 interface TimeSlot {
@@ -109,7 +109,7 @@ export default function BookSessionPage() {
 
   const days = getNextDays();
 
-  //Load real counsellors from backend 
+  // Load real counsellors from backend 
   useEffect(() =>{
     getCounsellors().then((data) => {
       setCounsellors(data);

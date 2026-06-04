@@ -7,7 +7,7 @@ import Cookies from 'js-cookie'
 import { FiMenu, FiX } from 'react-icons/fi'
 import {
   LayoutGrid, HeartPulse, MessageSquare, CalendarCheck2,
-  BookOpen, User, Settings, LogOut, ChevronLeft, ChevronRight,
+  BookOpen, User, Settings, LogOut, ChevronLeft, Sun, Moon, ChevronRight,
 } from 'lucide-react'
 
 /* ── Nav structure ── */
@@ -17,15 +17,16 @@ const NAV_GROUPS = [
     items: [
       { label: 'Overview',        href: '/dashboard/student',              icon: LayoutGrid },
       { label: 'Wellbeing Check', href: '/dashboard/student/assessment',   icon: HeartPulse,    badge: 'New' },
+      { label: 'Book',        href: '/dashboard/student/book',     icon: MessageSquare},
       { label: 'Messages',        href: '/dashboard/student/messages',     icon: MessageSquare, badge: '3' },
-      { label: 'Appointments',    href: '/dashboard/student/appointments', icon: CalendarCheck2 },
+      { label: 'Appointments',    href: '/dashboard/student/sessions', icon: CalendarCheck2 },
       { label: 'Resources',       href: '/dashboard/student/resources',    icon: BookOpen },
     ],
   },
   {
     section: 'Account',
     items: [
-      { label: 'Profile',  href: '/dashboard/student/profile',  icon: User },
+      // { label: 'Profile',  href: '/dashboard/student/profile',  icon: User },
       { label: 'Settings', href: '/dashboard/student/settings', icon: Settings },
     ],
   },
@@ -39,10 +40,34 @@ export default function StudentSidebar() {
   const pathname = usePathname()
   const router   = useRouter()
 
-  const [isCollapsed,   setIsCollapsed]   = useState(false)
-  const [isMobileOpen,  setIsMobileOpen]  = useState(false)
-  const [isDarkMode,    setIsDarkMode]    = useState(false)
+  const [isCollapsed,  setIsCollapsed]  = useState(false)
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const [isDarkMode,   setIsDarkMode]   = useState(false)
   const [user, setUser] = useState<{ full_name: string; department?: string; level?: string } | null>(null)
+
+
+    // Dark mode feature 
+    const toggleDarkMode = () => {
+    setIsDarkMode((prev) => {
+      const next = !prev
+      localStorage.setItem('theme', next ? 'dark' : 'light')
+      // Defer the event so it fires after this render cycle completes
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('themeToggle', { detail: { isDarkMode: next } }))
+      }, 0)
+      return next
+    })
+  }
+
+  useEffect(() => {
+  const saved = localStorage.getItem('theme')
+
+  if (saved === 'dark') {
+    setIsDarkMode(true)
+  } else {
+    setIsDarkMode(false)
+  }
+}, [])
 
   /* Load user from cookie */
   useEffect(() => {
@@ -50,7 +75,7 @@ export default function StudentSidebar() {
     if (stored) setUser(JSON.parse(stored))
   }, [])
 
-  /* Sync collapsed state + broadcast event (for header offset) */
+  /* Sync collapsed state + broadcast event */
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('sidebarToggle', { detail: { isCollapsed } }))
@@ -65,15 +90,30 @@ export default function StudentSidebar() {
     }
   }, [])
 
+   // ─── Theme tokens ──────────────────────────────────────────────────────────
+  const headerBorder  = isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.09)'
+  const pillBg        = isDarkMode ? 'rgba(255,255,255,0.08)'           : 'rgba(0,0,0,0.05)'
+  const pillBorder    = isDarkMode ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.10)'
+  const pillHover     = isDarkMode ? 'hover:bg-white/[0.14]'            : 'hover:bg-black/[0.07]'
+  const iconColor     = isDarkMode ? 'rgba(255,255,255,0.75)'           : 'rgba(0,0,0,0.55)'
+  const searchText    = isDarkMode ? 'rgba(255,255,255,0.4)'            : 'rgba(0,0,0,0.38)'
+  const dividerColor  = isDarkMode ? 'rgba(255,255,255,0.10)'           : 'rgba(0,0,0,0.10)'
+  const notifBorder   = isDarkMode ? 'rgba(0,40,20,1)'                  : '#ffffff'
+  // ─
+
   /* Listen for dark mode toggle from header */
   useEffect(() => {
+    const saved = localStorage.getItem('theme')
+    setIsDarkMode(saved === 'dark')
+
     const handler = (e: Event) => {
-      setIsDarkMode((e as CustomEvent<{ isDarkMode: boolean }>).detail.isDarkMode)
+      const custom = e as CustomEvent<{ isDarkMode: boolean }>
+      if (custom.detail?.isDarkMode !== undefined) {
+        setIsDarkMode(custom.detail.isDarkMode)
+      }
     }
+
     window.addEventListener('themeToggle', handler)
-    if (typeof window !== 'undefined') {
-      if (localStorage.getItem('theme') === 'dark') setIsDarkMode(true)
-    }
     return () => window.removeEventListener('themeToggle', handler)
   }, [])
 
@@ -82,6 +122,7 @@ export default function StudentSidebar() {
 
   /* Lock body scroll when mobile drawer is open */
   useEffect(() => {
+
     document.body.style.overflow = isMobileOpen ? 'hidden' : 'unset'
     return () => { document.body.style.overflow = 'unset' }
   }, [isMobileOpen])
@@ -99,302 +140,333 @@ export default function StudentSidebar() {
     ? `${user.department}${user.level ? ', ' + user.level : ''}`
     : 'Yabatech Student'
 
-  /* ── Shared sidebar body ── */
+  // ─── Theme tokens ───────────────────────────────────────────────────────────
+  // Text
+  const textPrimary   = isDarkMode ? '#ffffff'                   : '#111827'
+  const textSecondary = isDarkMode ? 'rgba(255,255,255,0.45)'    : 'rgba(0,0,0,0.45)'
+  const textMuted     = isDarkMode ? 'rgba(255,255,255,0.28)'    : 'rgba(0,0,0,0.30)'
+
+  // Surfaces
+  const sectionDivider = isDarkMode ? 'rgba(255,255,255,0.07)'   : 'rgba(0,0,0,0.07)'
+  const cardBg         = isDarkMode ? 'rgba(255,255,255,0.07)'   : 'rgba(0,0,0,0.04)'
+  const cardBorder     = isDarkMode ? 'rgba(255,255,255,0.10)'   : 'rgba(0,0,0,0.09)'
+  const topBorder      = isDarkMode ? 'rgba(255,255,255,0.08)'   : 'rgba(0,0,0,0.08)'
+
+  // Nav item — active
+  const activeItemBg     = isDarkMode ? 'rgba(0,135,81,0.30)'    : 'rgba(0,135,81,0.12)'
+  const activeItemBorder = isDarkMode ? 'rgba(0,135,81,0.40)'    : 'rgba(0,135,81,0.35)'
+  const activeIconBg     = '#008751'
+  const activeIconColor  = '#ffffff'
+  const activeLabelColor = isDarkMode ? '#ffffff'                 : '#004d2e'
+
+  // Nav item — idle
+  const idleIconBg    = isDarkMode ? 'rgba(255,255,255,0.07)'    : 'rgba(0,0,0,0.05)'
+  const idleIconColor = isDarkMode ? 'rgba(255,255,255,0.55)'    : 'rgba(0,0,0,0.50)'
+  const idleLabelColor= isDarkMode ? 'rgba(255,255,255,0.70)'    : 'rgba(0,0,0,0.65)'
+  const hoverBg       = isDarkMode ? 'rgba(255,255,255,0.07)'    : 'rgba(0,0,0,0.05)'
+
+  // Wellbeing card
+  const wbTitle  = isDarkMode ? '#86efac'                        : '#15803d'
+  const wbBarBg  = isDarkMode ? 'rgba(255,255,255,0.10)'         : 'rgba(0,0,0,0.08)'
+
+  // Logout
+  const logoutHoverBg = 'rgba(239,68,68,0.10)'
+  // ──────────────────────────────────────────────────────────────────────────
+
   const SidebarBody = () => (
     <div className="flex flex-col h-full">
 
-      {/* ── Logo / Brand ── */}
-      <div className={`flex items-center p-4 pb-2 shrink-0 ${isCollapsed ? 'lg:justify-center' : 'justify-between'}`}>
-        <div className={`flex items-center gap-2 overflow-hidden transition-all duration-300 ${isCollapsed ? 'lg:opacity-0 lg:w-0' : 'opacity-100'}`}>
-          {/* Replace the div below with <Image src="/logo.svg" … /> when ready */}
-          <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center font-extrabold text-sm shrink-0 ring-2 ${
-              isDarkMode ? 'bg-gray-700 text-blue-400 ring-gray-600' : 'bg-white text-green-600 ring-green-200'
-            }`}
-            style={{ fontFamily: 'Syne, sans-serif' }}
-          >
-            MB
-          </div>
-          <div>
-            <h2
-              className={`font-bold text-[1rem] leading-tight ${isDarkMode ? 'text-blue-400' : 'text-green-600'}`}
-              style={{ fontFamily: 'Syne, sans-serif' }}
-            >
-              MindBridge
-            </h2>
-            <p className={`text-[0.65rem] ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}>
-              Student Portal
-            </p>
-          </div>
-        </div>
+      {/* ── Background layers ── */}
+      {isDarkMode ? (
+        <>
+          <div className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&q=80')" }} />
+          <div className="absolute inset-0"
+            style={{ background: 'linear-gradient(160deg, rgba(0,40,20,0.97) 0%, rgba(0,60,30,0.95) 40%, rgba(0,80,40,0.90) 70%, rgba(0,55,25,0.96) 100%)' }} />
+        </>
+      ) : (
+        <div className="absolute inset-0 bg-white" />
+      )}
 
-        {/* Collapsed logo (desktop only) */}
-        {isCollapsed && (
-          <div className="hidden lg:flex justify-center w-full">
+      {/* All content above layers */}
+      <div className="relative flex flex-col h-full">
+
+        {/* ── Brand ── */}
+        <div
+          className={`flex items-center gap-2.5 px-5 py-[22px] pb-4 shrink-0 ${isCollapsed ? 'lg:justify-center' : ''}`}
+          style={{ borderBottom: `1px solid ${topBorder}` }}
+        >
+          {!isCollapsed && (
+            <>
+              <div
+                className="w-9 h-9 rounded-[10px] bg-[#008751] flex items-center justify-center text-white text-[13px] font-bold shrink-0"
+                style={{ fontFamily: 'Syne, sans-serif', border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,135,81,0.3)'}` }}
+              >
+                MB
+              </div>
+              <div>
+                <p className="text-[16px] font-bold leading-tight" style={{ color: textPrimary, fontFamily: 'Syne, sans-serif' }}>
+                  MindBridge
+                </p>
+                <p className="text-[11px] tracking-wide mt-px" style={{ color: textSecondary }}>
+                  Student Portal
+                </p>
+              </div>
+            </>
+          )}
+          {isCollapsed && (
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center font-extrabold text-sm ring-2 ${
-                isDarkMode ? 'bg-gray-700 text-blue-400 ring-gray-600' : 'bg-white text-green-600 ring-green-200'
-              }`}
-              style={{ fontFamily: 'Syne, sans-serif' }}
+              className="hidden lg:flex w-9 h-9 rounded-[10px] bg-[#008751] items-center justify-center text-white text-[13px] font-bold"
+              style={{ fontFamily: 'Syne, sans-serif', border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,135,81,0.3)'}` }}
             >
               MB
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* ── Desktop collapse toggle ── */}
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="hidden lg:flex absolute -right-3 top-8 items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 text-white shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-200 z-10"
-        aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-      >
-        {isCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
-      </button>
-
-      {/* ── User card ── */}
-      {!isCollapsed && (
-        <div className={`mx-3 mt-2 mb-1 rounded-2xl px-3 py-3 flex items-center gap-3 border transition-all duration-300 ${
-          isDarkMode
-            ? 'bg-gray-700/50 border-gray-600'
-            : 'bg-white/60 border-gray-200'
-        }`}>
-          <div
-            className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0 ring-2 ${
-              isDarkMode ? 'ring-gray-500' : 'ring-blue-200'
-            } bg-gradient-to-br from-green-800 to-green-400`}
-            style={{ fontFamily: 'Syne, sans-serif' }}
-          >
-            {initials}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className={`text-[0.82rem] font-semibold truncate ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-              {firstName}
-            </p>
-            <p className={`text-[0.68rem] truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}>
-              {deptLabel}
-            </p>
-          </div>
-          <div className="flex items-center gap-1 bg-green-100 border border-green-200 text-green-700 text-[0.6rem] font-semibold px-2 py-[2px] rounded-full shrink-0">
-            <span className="w-[5px] h-[5px] rounded-full bg-green-500 animate-pulse" />
-            Active
-          </div>
+          )}
         </div>
-      )}
 
-      {/* Collapsed user avatar (desktop) */}
-      {isCollapsed && (
-        <div className="hidden lg:flex justify-center mt-2 mb-1">
-          <div
-            className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-[11px] font-bold ring-2 ${
-              isDarkMode ? 'ring-gray-500' : 'ring-blue-200'
-            } bg-gradient-to-br from-green-800 to-green-400`}
-            style={{ fontFamily: 'Syne, sans-serif' }}
-          >
-            {initials}
-          </div>
-        </div>
-      )}
+        {/* ── Desktop collapse toggle ── */}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="hidden lg:flex absolute -right-3 top-8 items-center justify-center w-6 h-6 rounded-full bg-[#008751] text-white shadow-lg hover:scale-110 transition-all duration-200 z-50"
+          style={{ border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,135,81,0.4)'}` }}
+          aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {isCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+        </button>
 
-      {/* ── Scrollable nav ── */}
-      <nav className="flex flex-col flex-1 overflow-y-auto px-3 pb-4 mt-2 gap-[2px]
-        [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-
-        {NAV_GROUPS.map((group, gi) => (
-          <div key={group.section}>
-
-            {/* Section label */}
-            {!isCollapsed && (
-              <p className={`text-[0.68rem] font-semibold uppercase tracking-widest px-2 mb-1 ${
-                gi > 0 ? 'mt-4' : 'mt-1'
-              } ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}>
-                {group.section}
-              </p>
-            )}
-            {isCollapsed && gi > 0 && (
-              <div className={`h-px mx-2 my-3 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`} />
-            )}
-
-            {group.items.map(({ href, label, icon: Icon, badge }) => {
-              const active = pathname === href
-              const isNum  = badge && badge !== 'New'
-
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  title={isCollapsed ? label : ''}
-                  className={`
-                    flex items-center gap-3 p-2 rounded-[2rem] transition-all duration-200 group relative mb-[2px]
-                    ${active
-                      ? isDarkMode
-                        ? 'bg-gradient-to-l from-blue-900 via-blue-800 to-blue-900 text-white font-bold'
-                        : 'bg-gradient-to-l from-green-500 via-green-400 to-green-500 text-white font-bold'
-                      : isDarkMode
-                        ? 'text-gray-300 hover:bg-gradient-to-l hover:from-gray-700 hover:via-gray-800 hover:to-gray-700 hover:font-semibold'
-                        : 'text-gray-700 hover:bg-gradient-to-l hover:from-blue-100 hover:via-white hover:to-purple-200 hover:font-semibold'
-                    }
-                    ${isCollapsed ? 'lg:justify-center' : ''}
-                  `}
-                >
-                  {/* Icon bubble */}
-                  <span className={`border rounded-full p-[0.3rem] shrink-0 transition-all duration-200 ${
-                    active
-                      ? 'bg-white border-white'
-                      : isDarkMode
-                        ? 'bg-gray-700 border-gray-600'
-                        : 'bg-white border-gray-200'
-                  }`}>
-                    <Icon
-                      size={18}
-                      className={
-                        active
-                          ? 'text-green-500'
-                          : isDarkMode
-                            ? 'text-gray-300 group-hover:text-blue-400'
-                            : 'text-gray-500 group-hover:text-indigo-600'
-                      }
-                      strokeWidth={1.8}
-                    />
-                  </span>
-
-                  {/* Label */}
-                  <span className={`whitespace-nowrap flex-1 text-[0.88rem] transition-all duration-300 ${
-                    isCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : 'opacity-100'
-                  }`}>
-                    {label}
-                  </span>
-
-                  {/* Badge */}
-                  {badge && !isCollapsed && (
-                    <span className={`text-[0.6rem] font-bold px-2 py-[2px] rounded-full border ${
-                      isNum
-                        ? 'bg-red-100 text-red-600 border-red-200'
-                        : 'bg-yellow-100 text-yellow-700 border-yellow-200'
-                    }`}>
-                      {badge}
-                    </span>
-                  )}
-
-                  {/* Tooltip when collapsed */}
-                  {isCollapsed && (
-                    <span className="hidden lg:block absolute left-full ml-4 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg">
-                      {label}
-                      {badge && (
-                        <span className={`ml-2 text-[0.6rem] font-bold px-2 py-[1px] rounded-full ${
-                          isNum ? 'bg-red-500 text-white' : 'bg-yellow-400 text-gray-900'
-                        }`}>
-                          {badge}
-                        </span>
-                      )}
-                    </span>
-                  )}
-                </Link>
-              )
-            })}
-          </div>
-        ))}
-
-        {/* ── Wellbeing nudge card ── */}
+        {/* ── User card ── */}
         {!isCollapsed && (
-          <div className={`mt-4 rounded-2xl p-4 border transition-all duration-300 ${
-            isDarkMode
-              ? 'bg-gradient-to-br from-blue-900/40 to-purple-900/30 border-blue-700/40'
-              : 'bg-gradient-to-br from-green-50 to-blue-50 border-green-200'
-          }`}>
-            <p className={`text-[0.75rem] font-semibold mb-1 ${isDarkMode ? 'text-blue-300' : 'text-green-700'}`}>
-              📊 Wellbeing Score
-            </p>
-            <p className={`text-[0.68rem] mb-3 leading-relaxed ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}>
-              Last check-in 3 days ago. Stay on top of your mental health.
-            </p>
-            <div className={`h-1.5 w-full rounded-full overflow-hidden mb-1 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
-              <div className={`h-full w-[68%] rounded-full ${isDarkMode ? 'bg-gradient-to-r from-blue-400 to-purple-400' : 'bg-gradient-to-r from-green-400 to-blue-400'}`} />
+          <div
+            className="mx-3 mt-3 mb-1.5 rounded-[14px] px-3.5 py-3 flex items-center gap-2.5"
+            style={{ background: cardBg, border: `1px solid ${cardBorder}` }}
+          >
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0 bg-[#008751]"
+              style={{ border: `2px solid ${isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,135,81,0.3)'}` }}
+            >
+              {initials}
             </div>
-            <div className={`flex justify-between text-[0.62rem] ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-              <span>68 / 100</span>
-              <span>Good</span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[14px] font-semibold truncate" style={{ color: textPrimary }}>{firstName}</p>
+              <p className="text-[11px] truncate mt-px" style={{ color: textSecondary }}>{deptLabel}</p>
+            </div>
+            <div
+              className="flex items-center gap-1 shrink-0 px-2 py-[3px] rounded-full text-[9px] font-bold tracking-wide"
+              style={{
+                background: 'rgba(0,135,81,0.18)',
+                border: '1px solid rgba(0,135,81,0.35)',
+                color: isDarkMode ? '#86efac' : '#15803d',
+              }}
+            >
+              <span className="w-[5px] h-[5px] rounded-full bg-green-500 animate-pulse" />
+              Active
             </div>
           </div>
         )}
+
+        {isCollapsed && (
+          <div className="hidden lg:flex justify-center mt-3 mb-1.5">
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[11px] font-bold bg-[#008751]"
+              style={{ border: `2px solid ${isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,135,81,0.3)'}` }}
+            >
+              {initials}
+            </div>
+          </div>
+        )}
+
+        {/* ── Nav ── */}
+        <nav className="flex flex-col flex-1 overflow-y-auto px-3 pb-2 mt-1 gap-[2px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {NAV_GROUPS.map((group, gi) => (
+            <div key={group.section}>
+              {!isCollapsed && (
+                <p
+                  className={`text-[10px] font-bold uppercase tracking-[0.12em] px-2 mb-1 ${gi > 0 ? 'mt-4' : 'mt-2'}`}
+                  style={{ color: textMuted }}
+                >
+                  {group.section}
+                </p>
+              )}
+              {isCollapsed && gi > 0 && (
+                <div className="h-px mx-2 my-3" style={{ background: sectionDivider }} />
+              )}
+
+              {group.items.map(({ href, label, icon: Icon, badge }) => {
+                const active = pathname === href
+                const isNum  = badge && badge !== 'New'
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    title={isCollapsed ? label : ''}
+                    className={`flex items-center gap-2.5 px-2.5 py-2 rounded-[12px] transition-all duration-200 group relative mb-[2px]
+                      ${isCollapsed ? 'lg:justify-center' : ''}`}
+                    style={active
+                      ? { background: activeItemBg, border: `1px solid ${activeItemBorder}` }
+                      : { border: '1px solid transparent' }
+                    }
+                    onMouseEnter={e => { if (!active) e.currentTarget.style.background = hoverBg }}
+                    onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+                  >
+                    {/* Icon */}
+                    <span
+                      className="w-[32px] h-[32px] rounded-[9px] flex items-center justify-center shrink-0 transition-all"
+                      style={{ background: active ? activeIconBg : idleIconBg }}
+                    >
+                      <Icon
+                        size={16}
+                        style={{ color: active ? activeIconColor : idleIconColor }}
+                        strokeWidth={1.8}
+                      />
+                    </span>
+
+                    {/* Label */}
+                    <span
+                      className={`whitespace-nowrap flex-1 font-medium transition-all duration-300
+                        ${isCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : 'opacity-100'}`}
+                      style={{
+                        fontSize: '14px',
+                        fontWeight: active ? 600 : 500,
+                        color: active ? activeLabelColor : idleLabelColor,
+                      }}
+                    >
+                      {label}
+                    </span>
+
+                    {/* Badge */}
+                    {badge && !isCollapsed && (
+                      <span
+                        className={`text-[10px] font-bold px-[7px] py-[2px] rounded-full`}
+                        style={isNum
+                          ? { background: 'rgba(239,68,68,0.18)', color: '#f87171', border: '1px solid rgba(239,68,68,0.28)' }
+                          : { background: 'rgba(250,204,21,0.15)', color: '#fbbf24', border: '1px solid rgba(250,204,21,0.28)' }
+                        }
+                      >
+                        {badge}
+                      </span>
+                    )}
+
+                    {/* Collapsed tooltip */}
+                    {isCollapsed && (
+                      <span className="hidden lg:block absolute left-full ml-4 px-3 py-2 rounded-lg text-sm font-medium opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg"
+                        style={{
+                          background: isDarkMode ? '#1f2937' : '#111827',
+                          color: '#ffffff',
+                        }}
+                      >
+                        {label}
+                      </span>
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
+          ))}
+
+        {/* Theme toggle */}
+        <button
+          onClick={toggleDarkMode}
+          className="flex lg:hidden w-fit self-start mt-2 items-center rounded-full p-[3px] gap-0.5 transition-all duration-300"
+          style={{ background: pillBg, border: pillBorder }}
+          aria-label="Toggle dark mode"
+        >
+          <span
+            className={`w-[28px] h-[28px] rounded-full flex items-center justify-center transition-all duration-200 ${
+              !isDarkMode
+                ? 'bg-[#008751] text-white shadow-sm'
+                : isDarkMode ? 'text-white/40' : 'text-black/30'
+            }`}
+          >
+            <Sun size={15} />
+          </span>
+          <span
+            className={`w-[28px] h-[28px] rounded-full flex items-center justify-center transition-all duration-200 ${
+              isDarkMode
+                ? 'bg-white/15 text-white'
+                : 'text-black/30'
+            }`}
+          >
+            <Moon size={15} />
+          </span>
+        </button>
+        </nav>
 
         {/* ── Logout ── */}
         <button
           onClick={handleLogout}
-          className={`flex items-center gap-3 p-2 mt-4 rounded-[2rem] transition-all duration-200 group ${
-            isDarkMode
-              ? 'text-red-400 hover:bg-gradient-to-l hover:from-red-900/40 hover:via-red-800/30 hover:to-red-900/40'
-              : 'text-red-500 hover:bg-gradient-to-l hover:from-red-50 hover:via-white hover:to-red-50'
-          } ${isCollapsed ? 'lg:justify-center' : ''}`}
+          className={`flex items-center gap-2.5 mx-3 mb-4 mt-1 px-2.5 py-2 rounded-[12px] transition-all duration-200 group
+            ${isCollapsed ? 'lg:justify-center' : ''}`}
+          style={{ border: '1px solid transparent' }}
+          onMouseEnter={e => { e.currentTarget.style.background = logoutHoverBg }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
         >
-          <span className={`border rounded-full p-[0.3rem] shrink-0 ${
-            isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'
-          }`}>
-            <LogOut size={18} className="text-red-500" strokeWidth={1.8} />
+          <span
+            className="w-[32px] h-[32px] rounded-[9px] flex items-center justify-center shrink-0"
+            style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.20)' }}
+          >
+            <LogOut size={16} style={{ color: '#f87171' }} strokeWidth={1.8} />
           </span>
-          <span className={`whitespace-nowrap text-[0.88rem] font-medium transition-all duration-300 ${
-            isCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : 'opacity-100'
-          }`}>
+          <span
+            className={`whitespace-nowrap font-medium transition-all duration-300
+              ${isCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : 'opacity-100'}`}
+            style={{ fontSize: '14px', color: '#f87171' }}
+          >
             Sign out
           </span>
-          {isCollapsed && (
-            <span className="hidden lg:block absolute left-full ml-4 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg">
-              Sign out
-            </span>
-          )}
         </button>
-      </nav>
 
-      {/* ── Mobile close button ── */}
-      <div className="p-4 lg:hidden shrink-0">
-        <button
-          onClick={() => setIsMobileOpen(false)}
-          className={`w-full p-3 rounded-2xl font-semibold transition-all ${
-            isDarkMode
-              ? 'bg-gray-700 text-white hover:bg-gray-600'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-        >
-          Close Menu
-        </button>
+
+        {/* Mobile close */}
+        <div className="px-3 pb-4 lg:hidden shrink-0">
+          <button
+            onClick={() => setIsMobileOpen(false)}
+            className="w-full py-3 rounded-2xl text-sm font-medium transition-all"
+            style={{
+              background: cardBg,
+              border: `1px solid ${cardBorder}`,
+              color: textSecondary,
+            }}
+          >
+            Close Menu
+          </button>
+        </div>
+
       </div>
     </div>
   )
 
   return (
     <>
-      {/* ── Mobile hamburger ── */}
-      <button
+        {/* Mobile view hamberChevron */}
+        <button
         onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className={`fixed top-4 left-4 z-[60] lg:hidden p-1.5 rounded-lg shadow-lg transition-all duration-200 ${
-          isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'
-        }`}
+        className="fixed top-2 left-1 z-[200] lg:hidden p-[4px] rounded-full shadow-lg text-white"
+        style={{ background: '#003d1f' }}
         aria-label="Toggle menu"
       >
-        {isMobileOpen ? <FiX size={22} /> : <FiMenu size={22} />}
+        {isMobileOpen ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
       </button>
-
-      {/* ── Mobile overlay ── */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
+          className="fixed inset-0 z-[90] lg:hidden backdrop-blur-sm"
+          style={{ background: 'rgba(0,0,0,0.45)' }}
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
-      {/* ── Sidebar ── */}
-      <aside
-        className={`
-          fixed left-0 top-0 h-screen shadow-md font-[lexend] transition-all duration-300 ease-in-out z-50
-          flex flex-col
+        <aside className={`
+          fixed left-0 top-0 h-screen shadow-2xl font-[lexend]
+          transition-all duration-300 ease-in-out z-[100] overflow-visible
           ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}
-          ${isDarkMode
-            ? 'bg-gradient-to-b from-gray-800 via-gray-900 to-gray-800 border-r border-gray-700'
-            : 'bg-gradient-to-b from-blue-100 via-white to-green-100 border-r border-gray-200'
-          }
           w-72
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
+          style={{
+          borderRight: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)'}`,
+          boxShadow: isDarkMode
+            ? '4px 0 24px rgba(0,0,0,0.4)'
+            : '4px 0 24px rgba(0,0,0,0.07)',
+        }}
       >
         <SidebarBody />
       </aside>

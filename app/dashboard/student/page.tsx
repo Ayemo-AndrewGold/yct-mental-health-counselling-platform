@@ -2,8 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Cookies from 'js-cookie'
+import Cookies from 'js-cookie';
 import { getMe, getAppointments } from '@/lib/api';
+import {
+  HeartPulse, CalendarDays, MessageSquare, UserRound,
+  ChevronRight, ArrowRight, BookOpen, Sparkles,
+  CheckCircle2, Clock, XCircle, BarChart3, 
+  TrendingUp, TrendingDown, Brain, CloudRain, Moon, Flame, Video
+} from 'lucide-react';
 
 interface User {
   full_name: string;
@@ -23,72 +29,165 @@ interface Appointment {
   duration?: number;
 }
 
-function QuickAction({
-  icon, label, desc, href, color
-}: {
-  icon: React.ReactNode;
-  label: string;
-  desc: string;
-  href: string;
-  color: string;
-}) {
+/* ─────────────────────────────────────────
+   WELLBEING RING
+───────────────────────────────────────────── */
+function WellbeingRing({ score }: { score: number }) {
+  const radius = 36;
+  const circumference = 2 * Math.PI * radius;
+  const progress = (score / 100) * circumference;
   return (
-    <Link href={href} className="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-md transition-all duration-200 group flex flex-col gap-3">
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>
-        {icon}
+    <div className="flex flex-col items-center shrink-0">
+      <svg width="96" height="96" viewBox="0 0 96 96">
+        <circle cx="48" cy="48" r={radius} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="8" />
+        <circle
+          cx="48" cy="48" r={radius} fill="none" stroke="#fff" strokeWidth="8"
+          strokeDasharray={`${progress} ${circumference}`}
+          strokeLinecap="round" transform="rotate(-90 48 48)"
+        />
+        <text x="48" y="46" textAnchor="middle" fill="#fff" fontSize="18" fontWeight="700">{score}</text>
+        <text x="48" y="60" textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="9">/ 100</text>
+      </svg>
+      <p className="text-[10px] font-semibold text-white/40 uppercase tracking-widest mt-1">Wellbeing score</p>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────
+   STAT CARD — premium design
+   • Colored 3px top bar
+   • Large number hero
+   • Colored label
+   • Progress bar footer with percentage
+───────────────────────────────────────────── */
+interface StatCardProps {
+  label: string;
+  value: string;
+  sub: string;
+  icon: React.ElementType;
+  progressValue: number;   // 0–100
+  progressLabel: string;   // e.g. "Completion rate"
+  accentColor: string;     // tailwind arbitrary color hex
+  badge?: string;
+  badgeVariant?: 'positive' | 'negative';
+}
+
+const ACCENT = {
+  green: { bg: '#f0faf4', border: '#b6e6cc', icon: '#008751', label: '#3B6D11', value: '#1a3d1f', bar: '#b6e6cc', fill: '#008751' },
+  blue:  { bg: '#eef5fd', border: '#b3d3f5', icon: '#378ADD', label: '#185FA5', value: '#0c2f52', bar: '#b3d3f5', fill: '#378ADD' },
+  amber: { bg: '#fdf6e8', border: '#f0d08a', icon: '#BA7517', label: '#854F0B', value: '#412402', bar: '#f0d08a', fill: '#BA7517' },
+  red:   { bg: '#fdf0f0', border: '#f5bebe', icon: '#E24B4A', label: '#A32D2D', value: '#501313', bar: '#f5bebe', fill: '#E24B4A' },
+} as const;
+
+type AccentKey = keyof typeof ACCENT;
+
+function StatCard({ label, value, sub, icon: Icon, progressValue, accentKey, badge, badgeVariant = 'positive' }: {
+  label: string; value: string; sub?: string; icon: React.ElementType;
+  progressValue: number; accentKey: AccentKey; badge?: string; badgeVariant?: 'positive' | 'negative';
+}) {
+  const a = ACCENT[accentKey];
+  return (
+    <div
+      className="relative rounded-[20px] p-5 flex flex-col gap-0 overflow-hidden cursor-pointer
+                 transition-all duration-200 hover:-translate-y-[3px]"
+      style={{ background: a.bg, border: `1px solid ${a.border}` }}
+      onMouseEnter={e => (e.currentTarget.style.boxShadow = `0 12px 32px ${a.fill}22`)}
+      onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
+    >
+      {/* Decorative circle */}
+      <div className="absolute bottom-[-18px] right-[-18px] w-[72px] h-[72px] rounded-full opacity-[0.08]"
+        style={{ background: a.fill }} />
+
+      {/* Top */}
+      <div className="flex items-center justify-between mb-[18px]">
+        <span className="text-[11px] font-bold uppercase tracking-[0.1em]" style={{ color: a.label }}>{label}</span>
+        <span className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center text-white"
+          style={{ background: a.icon }}>
+          <Icon size={16} />
+        </span>
       </div>
-      <div>
-        <p className="text-[13px] font-semibold text-gray-900 group-hover:text-[#1a5c2a] transition-colors">{label}</p>
-        <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">{desc}</p>
+
+      {/* Value */}
+      <p className="text-[38px] font-bold leading-none mb-[6px]" style={{ color: a.value }}>{value}</p>
+
+      {/* Trend / sub */}
+      <div className="flex items-center gap-2 mb-4">
+        {badge ? (
+          <span className="flex items-center gap-1 text-[12px] font-semibold px-2 py-[3px] rounded-full text-white"
+            style={{ background: badgeVariant === 'positive' ? '#008751' : '#E24B4A' }}>
+            {badgeVariant === 'positive' ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+            {badge}
+          </span>
+        ) : sub ? (
+          <span className="text-[13px] font-medium" style={{ color: a.label }}>{sub}</span>
+        ) : null}
       </div>
-      <div className="flex items-center gap-1 text-[11px] text-[#1a5c2a] font-medium mt-auto">
-        Get started
-        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <polyline points="9 18 15 12 9 6"/>
-        </svg>
+
+      {/* Bar */}
+      <div className="h-[5px] rounded-full overflow-hidden mt-auto" style={{ background: a.bar }}>
+        <div className="h-full rounded-full" style={{ width: `${progressValue}%`, background: a.fill }} />
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────
+   QUICK ACTION CARD
+───────────────────────────────────────────── */
+const QA_ACCENT = {
+  green:  { bg: '#f0faf4', border: '#b6e6cc', icon: '#008751', label: '#1a3d1f', desc: '#3B6D11',  cta: '#008751' },
+  blue:   { bg: '#eef5fd', border: '#b3d3f5', icon: '#378ADD', label: '#0c2f52', desc: '#185FA5',  cta: '#378ADD' },
+  purple: { bg: '#f3f1fe', border: '#c9c4f4', icon: '#7F77DD', label: '#26215C', desc: '#534AB7',  cta: '#7F77DD' },
+  amber:  { bg: '#fdf6e8', border: '#f0d08a', icon: '#BA7517', label: '#412402', desc: '#854F0B',  cta: '#BA7517' },
+} as const;
+
+type QAAccentKey = keyof typeof QA_ACCENT;
+
+function QuickAction({ href, label, desc, icon: Icon, accentKey }: {
+  href: string; label: string; desc: string;
+  icon: React.ElementType; accentKey: QAAccentKey;
+}) {
+  const a = QA_ACCENT[accentKey];
+  return (
+    <Link
+      href={href}
+      className="relative rounded-[20px] p-5 flex flex-col gap-0 overflow-hidden
+                 transition-all duration-200 hover:-translate-y-[3px]"
+      style={{ background: a.bg, border: `1px solid ${a.border}` }}
+      onMouseEnter={e => (e.currentTarget.style.boxShadow = `0 12px 32px ${a.icon}22`)}
+      onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
+    >
+      {/* Deco circle */}
+      <div className="absolute bottom-[-20px] right-[-20px] w-[80px] h-[80px] rounded-full opacity-[0.07]"
+        style={{ background: a.icon }} />
+
+      {/* Icon */}
+      <div className="w-[44px] h-[44px] rounded-[14px] flex items-center justify-center mb-4 text-white"
+        style={{ background: a.icon }}>
+        <Icon size={20} />
+      </div>
+
+      {/* Label */}
+      <p className="text-[14px] font-bold mb-1.5" style={{ color: a.label }}>{label}</p>
+
+      {/* Desc */}
+      <p className="text-[12px] leading-relaxed mb-5" style={{ color: a.desc }}>{desc}</p>
+
+      {/* CTA */}
+      <div className="flex items-center gap-2 mt-auto" style={{ color: a.cta }}>
+        <span className="text-[12px] font-bold">Get started</span>
+        <span className="w-[22px] h-[22px] rounded-full flex items-center justify-center text-white"
+          style={{ background: a.cta }}>
+          <ArrowRight size={11} />
+        </span>
       </div>
     </Link>
   );
 }
 
-function StatCard({ label, value, sub, accent }: {
-  label: string; value: string; sub: string; accent: string;
-}) {
-  return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-5 relative overflow-hidden">
-      <div className={`absolute top-0 left-0 right-0 h-[2px] ${accent}`} />
-      <p className="text-[28px] font-bold text-gray-900 leading-none tracking-tight">{value}</p>
-      <p className="text-[12px] font-medium text-gray-700 mt-1">{label}</p>
-      <p className="text-[10.5px] text-gray-400 mt-1">{sub}</p>
-    </div>
-  );
-}
-
-function WellbeingRing({ score }: { score: number }) {
-  const radius = 36;
-  const circumference = 2 * Math.PI * radius;
-  const progress = (score / 100) * circumference;
-
-  return (
-    <div className="flex flex-col items-center justify-center">
-      <svg width="96" height="96" viewBox="0 0 96 96">
-        <circle cx="48" cy="48" r={radius} fill="none" stroke="#e8f5ec" strokeWidth="8"/>
-        <circle
-          cx="48" cy="48" r={radius} fill="none"
-          stroke="#1a5c2a" strokeWidth="8"
-          strokeDasharray={`${progress} ${circumference}`}
-          strokeLinecap="round"
-          transform="rotate(-90 48 48)"
-        />
-        <text x="48" y="53" textAnchor="middle" fill="#1a5c2a" fontSize="20" fontWeight="700">
-          {score}
-        </text>
-      </svg>
-      <p className="text-[11px] text-white/60 mt-1">Wellbeing Score</p>
-    </div>
-  );
-}
-
+/* ─────────────────────────────────────────
+   MAIN PAGE
+───────────────────────────────────────────── */
 export default function OverviewPage() {
   const [user, setUser] = useState<User | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -124,216 +223,300 @@ export default function OverviewPage() {
   }
 
   const upcomingAppointments = appointments.filter(
-    a => a.status === 'Confirmed' || a.status === 'Pending'
+    (a) => a.status === 'Confirmed' || a.status === 'Pending'
   );
   const nextAppointment = upcomingAppointments[0] ?? null;
   const firstName = user?.full_name?.split(' ')[0] ?? 'Student';
 
+  const completedCount = appointments.filter((a) => a.status === 'Completed').length;
+  const cancelledCount = appointments.filter((a) => a.status === 'Cancelled').length;
+  const totalCount = appointments.length || 1;
+
   return (
-    // ✅ Responsive horizontal padding — tight on mobile, comfortable on desktop
-    <div className="px-3 sm:px-5 md:px-6 py-5 space-y-5 min-w-0">
+    <div className="flex flex-col gap-6 px-6 pt-3 max-w-400 mx-auto">
 
-      {/* PAGE TITLE */}
+      {/* ── Page Header ── */}
       <div>
-        <h2 className="text-[18px] font-semibold text-gray-900 tracking-[-0.4px]">
-          Your Dashboard
-        </h2>
-        <p className="text-[12px] text-gray-500 mt-0.5">
-          Here's an overview of your mental health journey at Yabatech
-        </p>
+        <div className="flex items-center gap-2 text-[14px] text-muted-foreground mb-1">
+          <span>Portal</span>
+          <ChevronRight size={12} />
+          <span className="text-[18px] font-medium">Dashboard</span>
+        </div>
+        <h1 className="text-[30px] font-bold text-foreground">Overview</h1>
+        <p className="text-[16px] text-muted-foreground mt-1">Here's your mental health journey at Yabatech.</p>
       </div>
 
-      {/* WELCOME BANNER */}
-      {/* ✅ Stacks vertically on mobile, side-by-side on sm+ */}
-      <div className="bg-[#1a5c2a] rounded-2xl px-4 sm:px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <p className="text-[10px] font-bold text-yellow-400 uppercase tracking-[0.08em] mb-1">
-            Welcome back
-          </p>
-          <h3 className="text-[16px] font-semibold text-white leading-snug mb-1">
-            Hi {firstName}, how are you feeling today?
-          </h3>
-          <p className="text-[12px] text-white/60 max-w-sm">
-            Your wellbeing matters. Take a quick assessment or book a session with a counsellor.
-          </p>
-        </div>
-        {/* ✅ Ring visible on sm+ instead of md+ so it shows sooner */}
-        <div className="hidden sm:block shrink-0">
-          <WellbeingRing score={72} />
+      {/* ── Welcome Banner — photo bg with green overlay ── */}
+      <div className="relative rounded-2xl overflow-hidden" style={{ minHeight: 200 }}>
+
+        {/* Photo layer */}
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1200&q=80')",
+          }}
+        />
+
+        {/* Directional green overlay — darker on left where text is, lighter on right */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(105deg, rgba(0,55,30,0.93) 0%, rgba(0,87,51,0.82) 55%, rgba(0,87,51,0.55) 100%)',
+          }}
+        />
+
+        {/* Content */}
+        <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-7 py-8">
+          <div>
+            <div className="flex items-center gap-1.5 mb-2">
+              <Sparkles size={17} className="text-yellow-300" />
+              <p className="text-[16px] font-bold text-yellow-300 uppercase tracking-[0.12em]">Welcome back</p>
+            </div>
+            <h2 className="text-[23px] font-bold text-white leading-snug mb-2">
+              Hi {firstName}, how are you feeling today?
+            </h2>
+            <p className="text-[15px] text-white/60 max-w-sm leading-relaxed">
+              Your wellbeing matters. Take a quick assessment or book a session with a counsellor.
+            </p>
+            <Link
+              href="/dashboard/student/assessment"
+              className="inline-flex items-center gap-1.5 mt-5 px-5 py-2.5 rounded-xl
+                         bg-white text-[#008751] text-[15px] font-bold
+                         hover:bg-white/90 transition-colors shadow-lg shadow-black/20"
+            >
+              Take assessment <ArrowRight size={16} />
+            </Link>
+          </div>
+          <div className="hidden sm:block">
+            <WellbeingRing score={72} />
+          </div>
         </div>
       </div>
 
-      {/* STAT CARDS */}
-      {/* ✅ 1 col on mobile → 2 col on sm → 4 col on xl */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+      {/* ── Stat Cards ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
-          label="Sessions Attended"
-          value={String(appointments.filter(a => a.status === 'Completed').length)}
+          label="Sessions attended"
+          value={String(completedCount).padStart(2, '0')}
           sub="Total completed sessions"
-          accent="bg-[#1a5c2a]"
+          icon={CheckCircle2}
+          accentKey="green"
+          progressValue={Math.round((completedCount / totalCount) * 100)}
+          badge="+2 this month"
+          badgeVariant="positive"
         />
         <StatCard
-          label="Assessments Taken"
-          value="0"
+          label="Assessments taken"
+          value="00"
           sub="No assessments yet"
-          accent="bg-yellow-400"
+          icon={BarChart3}
+          accentKey="blue"
+          progressValue={0}
         />
         <StatCard
-          label="Upcoming Appointments"
-          value={String(upcomingAppointments.length)}
+          label="Upcoming sessions"
+          value={String(upcomingAppointments.length).padStart(2, '0')}
           sub={nextAppointment ? formatDate(nextAppointment.date) : 'No upcoming sessions'}
-          accent="bg-blue-400"
+          icon={Clock}
+          accentKey="amber"
+          progressValue={upcomingAppointments.length > 0 ? 40 : 0}
         />
         <StatCard
           label="Cancelled"
-          value={String(appointments.filter(a => a.status === 'Cancelled').length)}
-          sub="Total canceled sessions"
-          accent="bg-red-400"
+          value={String(cancelledCount).padStart(2, '0')}
+          sub="Total cancelled sessions"
+          icon={XCircle}
+          accentKey="red"
+          progressValue={Math.round((cancelledCount / totalCount) * 100)}
+          badge={cancelledCount > 0 ? 'Needs review' : undefined}
+          badgeVariant="negative"
         />
       </div>
 
-      {/* QUICK ACTIONS */}
+      {/* ── Quick Actions ── */}
       <div>
-        <h3 className="text-[13px] font-semibold text-gray-700 mb-3">Quick Actions</h3>
-        {/* ✅ 1 col on mobile → 2 col on sm → 4 col on xl */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+        <p className="text-[15px] font-bold uppercase tracking-widest text-muted-foreground mb-3">
+          Quick Actions
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           <QuickAction
             href="/dashboard/student/assessment"
-            color="bg-[#e8f5ec]"
             label="Wellbeing Check"
             desc="Take PHQ-9, GAD-7 or PSS assessment"
-            icon={
-              <svg className="w-5 h-5 stroke-[#1a5c2a]" viewBox="0 0 24 24" fill="none" strokeWidth="1.75">
-                <path d="M12 21C12 21 3 15.5 3 9.5C3 7.01 4.99 5 7.5 5C9.14 5 10.61 5.83 11.5 7.09C12.39 5.83 13.86 5 15.5 5C18.01 5 20 7.01 20 9.5C20 15.5 12 21 12 21Z"/>
-              </svg>
-            }
+            icon={HeartPulse}
+            accentKey="green"
+            
           />
           <QuickAction
             href="/dashboard/student/book"
-            color="bg-blue-50"
             label="Book a Session"
             desc="Schedule time with an available counsellor"
-            icon={
-              <svg className="w-5 h-5 stroke-blue-600" viewBox="0 0 24 24" fill="none" strokeWidth="1.75">
-                <rect x="3" y="4" width="18" height="18" rx="2"/>
-                <line x1="16" y1="2" x2="16" y2="6"/>
-                <line x1="8" y1="2" x2="8" y2="6"/>
-                <line x1="3" y1="10" x2="21" y2="10"/>
-              </svg>
-            }
+            icon={CalendarDays}
+            accentKey="blue"
           />
           <QuickAction
             href="/dashboard/student/messages"
-            color="bg-purple-50"
             label="Message Counsellor"
             desc="Send a secure message to your counsellor"
-            icon={
-              <svg className="w-5 h-5 stroke-purple-600" viewBox="0 0 24 24" fill="none" strokeWidth="1.75">
-                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-              </svg>
-            }
+            icon={MessageSquare}
+            accentKey="purple"
           />
           <QuickAction
             href="/dashboard/student/anonymous"
-            color="bg-orange-50"
             label="Anonymous Chat"
             desc="Talk without revealing your identity"
-            icon={
-              <svg className="w-5 h-5 stroke-orange-500" viewBox="0 0 24 24" fill="none" strokeWidth="1.75">
-                <circle cx="12" cy="8" r="4"/>
-                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-              </svg>
-            }
+            icon={UserRound}
+            accentKey="amber"
           />
         </div>
       </div>
 
-      {/* BOTTOM ROW */}
-      {/* ✅ Stacks on mobile, side-by-side from md+ */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* ── Bottom Row ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4">
 
-        {/* Upcoming appointment */}
-        <div className="bg-white border border-gray-100 rounded-2xl px-5 py-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[13px] font-semibold text-gray-900">Next Appointment</h2>
-            <Link href="/dashboard/student/appointments" className="text-[11.5px] text-[#1a5c2a] font-medium hover:underline">
-              View all →
+        {/* Next Appointment */}
+        <div
+          className="relative rounded-[20px] p-6 overflow-hidden"
+          style={{ background: '#f0faf4', border: '1px solid #b6e6cc' }}
+        >
+          {/* Deco circles */}
+          <div className="absolute bottom-[-28px] right-[-28px] w-[110px] h-[110px] rounded-full opacity-[0.06]" style={{ background: '#008751' }} />
+          <div className="absolute top-[-20px] right-[60px] w-[60px] h-[60px] rounded-full opacity-[0.04]" style={{ background: '#008751' }} />
+
+          {/* Header */}
+          <div className="flex items-center justify-between mb-5 relative">
+            <h2 className="text-[18px] font-bold" style={{ color: '#1a3d1f' }}>Next Appointment</h2>
+            <Link href="/dashboard/student/appointments"
+              className="flex items-center gap-1 text-[12px] font-bold"
+              style={{ color: '#008751' }}>
+              View all <ArrowRight size={12} />
             </Link>
           </div>
+
           {nextAppointment ? (
-            <div className="flex items-start gap-4 p-4 bg-[#e8f5ec] border border-[#b6dfc0] rounded-xl">
-              <div className="w-10 h-10 rounded-xl bg-[#1a5c2a] flex items-center justify-center text-white text-[11px] font-bold shrink-0">
-                {new Date(nextAppointment.date).getDate()}
+            <>
+              <div className="flex items-start gap-4 relative">
+                {/* Date box */}
+                <div className="w-14 h-16 rounded-[14px] flex flex-col items-center justify-center text-white shrink-0"
+                  style={{ background: '#008751' }}>
+                  <span className="text-[26px] font-bold leading-none">
+                    {new Date(nextAppointment.date).getDate()}
+                  </span>
+                  <span className="text-[16px] font-semibold uppercase tracking-wider opacity-75 mt-0.5">
+                    {new Date(nextAppointment.date).toLocaleString('en', { month: 'short' })}
+                  </span>
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-bold truncate mb-1" style={{ color: '#1a3d1f' }}>
+                    Session with {nextAppointment.counsellor_name}
+                  </p>
+                  <div className="flex items-center gap-1.5 text-[13px] mb-1" style={{ color: '#3B6D11' }}>
+                    <Clock size={15} />
+                    {formatDate(nextAppointment.date)} · {formatTime(nextAppointment.time)}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[12px]" style={{ color: '#3B6D11' }}>
+                    <Video size={15} />
+                    {nextAppointment.session_type} · {nextAppointment.duration ?? 45} min
+                  </div>
+                </div>
+
+                {/* Status badge */}
+                <span
+                  className="shrink-0 text-[15px] font-bold px-3 py-1 rounded-full uppercase tracking-wide"
+                  style={nextAppointment.status === 'Confirmed'
+                    ? { background: '#008751', color: '#fff' }
+                    : { background: '#fdf6e8', border: '1px solid #f0d08a', color: '#854F0B' }
+                  }
+                >
+                  {nextAppointment.status}
+                </span>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-semibold text-gray-900 truncate">
-                  Session with {nextAppointment.counsellor_name}
-                </p>
-                <p className="text-[11px] text-gray-500 mt-0.5">
-                  {formatDate(nextAppointment.date)} · {formatTime(nextAppointment.time)}
-                </p>
-                <p className="text-[11px] text-gray-500">
-                  {nextAppointment.session_type} · {nextAppointment.duration ?? 45} min
-                </p>
-              </div>
-              <span className="text-[10px] font-semibold px-2 py-1 bg-[#1a5c2a] text-white rounded-full shrink-0">
-                {nextAppointment.status}
-              </span>
-            </div>
+
+              {upcomingAppointments.length > 1 && (
+                <>
+                  <div className="h-px my-[20px]" style={{ background: '#b6e6cc' }} />
+                  <p className="text-center text-[15px]" style={{ color: '#3B6D11' }}>
+                    +{upcomingAppointments.length - 1} more upcoming.{' '}
+                    <Link href="/dashboard/student/appointments"
+                      className="font-bold text-[14px]" style={{ color: '#008751' }}>
+                      View all
+                    </Link>
+                  </p>
+                </>
+              )}
+            </>
           ) : (
-            <div className="text-center py-6">
-              <p className="text-[12px] text-gray-400">No upcoming appointments.</p>
-              <Link href="/dashboard/student/book" className="text-[12px] text-[#1a5c2a] hover:underline mt-1 inline-block">
-                Book one →
+            <div className="flex flex-col items-center justify-center py-7 text-center relative">
+              <div className="w-[52px] h-[52px] rounded-2xl flex items-center justify-center text-white mb-4"
+                style={{ background: '#008751' }}>
+                <CalendarDays size={22} />
+              </div>
+              <p className="text-[20px] font-bold mb-1.5" style={{ color: '#1a3d1f' }}>No upcoming appointments</p>
+              <p className="text-[16px] mb-5" style={{ color: '#3B6D11' }}>Schedule a session with a counsellor</p>
+              <Link href="/dashboard/student/book"
+                className="inline-flex items-center gap-2 text-white text-[12px] font-bold px-5 py-2.5 rounded-full transition-opacity hover:opacity-90"
+                style={{ background: '#008751' }}>
+                Book a session <ArrowRight size={12} />
               </Link>
             </div>
-          )}
-          {upcomingAppointments.length > 1 && (
-            <p className="text-[11px] text-gray-400 mt-3 text-center">
-              +{upcomingAppointments.length - 1} more upcoming.{' '}
-              <Link href="/dashboard/student/appointments" className="text-[#1a5c2a] hover:underline">
-                View all
-              </Link>
-            </p>
           )}
         </div>
 
-        {/* Mental health resources */}
-        <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
-            <h2 className="text-[13px] font-semibold text-gray-900">Mental Health Resources</h2>
-            <Link href="/dashboard/student/resources" className="text-[11.5px] text-[#1a5c2a] font-medium hover:underline">
-              View all →
+        {/* Resources */}
+        <div
+          className="relative rounded-[20px] overflow-hidden"
+          style={{ background: '#f0faf4', border: '1px solid #b6e6cc' }}
+        >
+          {/* Deco */}
+          <div className="absolute bottom-[-28px] right-[-28px] w-[100px] h-[100px] rounded-full opacity-[0.05] pointer-events-none"
+            style={{ background: '#008751' }} />
+
+          {/* Header */}
+          <div className="flex items-center justify-between px-[22px] pt-5 pb-4">
+            <h2 className="text-[15px] font-bold" style={{ color: '#1a3d1f' }}>Resources</h2>
+            <Link href="/dashboard/student/resources"
+              className="flex items-center gap-1 text-[13px] font-bold"
+              style={{ color: '#008751' }}>
+              View all <ArrowRight size={14} />
             </Link>
           </div>
-          <div className="px-5 divide-y divide-gray-50">
+
+          {/* List */}
+          <div className="px-3 pb-3 flex flex-col gap-1.5">
             {[
-              { title: 'Managing Exam Anxiety',    tag: 'Anxiety',    color: 'bg-blue-50 text-blue-700' },
-              { title: 'Understanding Depression', tag: 'Depression', color: 'bg-purple-50 text-purple-700' },
-              { title: 'Sleep & Mental Health',    tag: 'Wellness',   color: 'bg-green-50 text-green-700' },
-              { title: 'Stress Management Tips',   tag: 'Stress',     color: 'bg-orange-50 text-orange-700' },
+              { title: 'Managing Exam Anxiety',    sub: '5 min read', tag: 'Anxiety',    icon: Brain,      iconCls: 'bg-[#eef5fd] text-[#378ADD]', tagCls: 'bg-[#eef5fd] text-[#185FA5]' },
+              { title: 'Understanding Depression', sub: '8 min read', tag: 'Depression', icon: CloudRain,  iconCls: 'bg-[#f3f1fe] text-[#7F77DD]', tagCls: 'bg-[#f3f1fe] text-[#534AB7]' },
+              { title: 'Sleep & Mental Health',    sub: '6 min read', tag: 'Wellness',   icon: Moon,       iconCls: 'bg-[#008751] text-white',      tagCls: 'bg-[#008751] text-white' },
+              { title: 'Stress Management Tips',   sub: '4 min read', tag: 'Stress',     icon: Flame,      iconCls: 'bg-[#fdf6e8] text-[#BA7517]', tagCls: 'bg-[#fdf6e8] text-[#854F0B] border border-[#f0d08a]' },
             ].map((r) => (
-              <div key={r.title} className="flex items-center justify-between py-3 group">
+              <Link
+                key={r.title}
+                href="/dashboard/student/resources"
+                className="flex items-center justify-between px-2.5 py-[11px] rounded-[14px]
+                          hover:bg-[#008751]/[0.07] transition-colors group"
+              >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-7 h-7 rounded-lg bg-[#e8f5ec] flex items-center justify-center shrink-0">
-                    <svg className="w-3.5 h-3.5 stroke-[#1a5c2a]" viewBox="0 0 24 24" fill="none" strokeWidth="2">
-                      <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
-                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
-                    </svg>
+                  <span className={`w-9 h-9 rounded-[11px] flex items-center justify-center shrink-0 ${r.iconCls}`}>
+                    <r.icon size={16} />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[15px] font-semibold truncate" style={{ color: '#1a3d1f' }}>{r.title}</p>
+                    <p className="text-[13px] mt-px" style={{ color: '#3B6D11' }}>{r.sub}</p>
                   </div>
-                  <p className="text-[12px] font-medium text-gray-800 group-hover:text-[#1a5c2a] transition-colors truncate">
-                    {r.title}
-                  </p>
                 </div>
-                <span className={`text-[10px] font-semibold px-2 py-[2px] rounded-full shrink-0 ml-2 ${r.color}`}>
+                <span className={`shrink-0 ml-2 text-[12px] font-bold px-2.5 py-[3px] rounded-full uppercase tracking-wide ${r.tagCls}`}>
                   {r.tag}
                 </span>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
-      </div>
 
+      </div>
     </div>
   );
 }
