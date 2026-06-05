@@ -67,19 +67,46 @@ function ConversationItem({ conv, active, onClick }: {
 }
 
 // ─── Message bubble ───────────────────────────────────────────────────────────
-function MessageBubble({ msg, currentUserId }: { msg: Message; currentUserId: number }) {
-  const isMine = msg.sender_id === currentUserId;
+function MessageBubble({
+  msg,
+  currentUserId,
+}: {
+  msg: Message;
+  currentUserId: number;
+}) {
+  const isMine = Number(msg.sender_id) === Number(currentUserId);
+
   return (
-    <div className={`flex ${isMine ? 'justify-end' : 'justify-start'} mb-3`}>
-      <div className={`max-w-[70%] px-4 py-2.5 rounded-2xl text-[12px] leading-relaxed
-        ${isMine
-          ? 'bg-teal-700 text-white rounded-br-sm'
-          : 'bg-white border border-gray-100 text-gray-800 rounded-bl-sm shadow-sm'}`}>
-        <p>{msg.text}</p>
-        <p className={`text-[10px] mt-1 ${isMine ? 'text-white/60 text-right' : 'text-gray-400'}`}>
-          {msg.time}
-          {isMine && <span className="ml-1">{msg.read ? '✓✓' : '✓'}</span>}
+    <div
+      className={`flex w-full mb-3 ${
+        isMine ? 'justify-end' : 'justify-start'
+      }`}
+    >
+      <div
+        className={`max-w-[75%] px-4 py-3 rounded-2xl shadow-sm ${
+          isMine
+            ? 'bg-teal-700 text-white rounded-br-md'
+            : 'bg-white border border-gray-200 text-gray-800 rounded-bl-md'
+        }`}
+      >
+        <p className="text-[12px] leading-relaxed whitespace-pre-wrap">
+          {msg.text}
         </p>
+
+        <div
+          className={`mt-1 text-[10px] ${
+            isMine
+              ? 'text-white/70 text-right'
+              : 'text-gray-400 text-left'
+          }`}
+        >
+          {msg.time}
+          {isMine && (
+            <span className="ml-1">
+              {msg.read ? '✓✓' : '✓'}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -94,6 +121,9 @@ function NewMessageModal({ onClose, onSelectStudent, existingIds }: {
   const [students, setStudents] = useState<Student[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+
+
+
 
   useEffect(() => {
     getCounsellorStudents().then((data) => {
@@ -221,22 +251,49 @@ export default function CounsellorMessagesPage() {
   );
   const existingConvIds = conversations.map((c) => c.user_id);
 
-  useEffect(() => {
-    const stored = Cookies.get('user');
-    if (stored) {
-      const user = JSON.parse(stored);
-      setCurrentUserId(user.id);
-    }
-    getMessages().then((data) => {
-      setConversations(data);
-      if (data.length > 0) setActiveId(String(data[0].user_id));
-      setLoading(false);
+const loadMessages = async () => {
+  try {
+    const data = await getMessages();
+
+    setConversations(prev => {
+      const oldData = JSON.stringify(prev);
+      const newData = JSON.stringify(data);
+
+      return oldData !== newData ? data : prev;
     });
-  }, []);
+
+    if (!activeId && data.length > 0) {
+      setActiveId(String(data[0].user_id));
+    }
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+useEffect(() => {
+  const stored = Cookies.get('user');
+
+  if (stored) {
+    const user = JSON.parse(stored);
+    setCurrentUserId(user.id);
+  }
+
+  loadMessages().finally(() => {
+    setLoading(false);
+  });
+}, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [active?.messages]);
+
+  useEffect(() => {
+  const interval = setInterval(() => {
+    loadMessages();
+  }, 3000); // every 3 seconds
+
+  return () => clearInterval(interval);
+}, [activeId]);
 
   useEffect(() => {
     if (activeId) {
