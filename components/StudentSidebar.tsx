@@ -439,11 +439,11 @@ export default function StudentSidebar() {
         {/* Mobile view hamberChevron */}
         <button
         onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="fixed top-2 left-1 z-[200] lg:hidden p-[4px] rounded-full shadow-lg text-white"
+        className="fixed top-2 left-1 z-[200] lg:hidden p-[5px] rounded-full shadow-lg text-white"
         style={{ background: '#003d1f' }}
         aria-label="Toggle menu"
       >
-        {isMobileOpen ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
+        {isMobileOpen ? <ChevronLeft size={15} /> : <ChevronRight size={15} />}
       </button>
       {isMobileOpen && (
         <div

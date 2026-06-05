@@ -179,6 +179,19 @@ export default function StudentMessagesPage() {
     }
   }, [activeId]);
 
+  // Auto-refresh messages every 5 seconds
+    useEffect(() => {
+      if (!activeId) return;
+
+      const interval = setInterval(() => {
+        getMessages().then(data => {
+          setConversations(data);
+        });
+      }, 5000);
+
+  return () => clearInterval(interval);
+}, [activeId]);
+
   function handleSelectConv(userId: number) {
     setActiveId(userId);
     setMobileView('chat'); // switch to chat panel on mobile
