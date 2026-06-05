@@ -181,9 +181,9 @@ export default function StudentSidebar() {
       {isDarkMode ? (
         <>
           <div className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: "url('https://media.licdn.com/dms/image/v2/D4D03AQGkz3SuholHqA/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1685926408248?e=2147483647&v=beta&t=UDsIPw1_4-hf9lbYc5KTM0pJXVsh1Et4zhi2-EpoRYs')" }} />
+            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&q=80')" }} />
           <div className="absolute inset-0"
-            style={{ background: 'linear-gradient(160deg, rgba(0, 40, 20, 0.89) 0%, rgba(0, 60, 30, 0.86) 40%, rgba(0,80,40,0.90) 70%, rgba(0,55,25,0.96) 100%)' }} />
+            style={{ background: 'linear-gradient(160deg, rgba(0,40,20,0.97) 0%, rgba(0,60,30,0.95) 40%, rgba(0,80,40,0.90) 70%, rgba(0,55,25,0.96) 100%)' }} />
         </>
       ) : (
         <div className="absolute inset-0 bg-white" />
