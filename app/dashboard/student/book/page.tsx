@@ -3,453 +3,439 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getCounsellors, bookAppointment } from '@/lib/api';
-import Cookies from 'js-cookie'
+import { Check, Users, Video, MessageSquare, ArrowRight } from 'lucide-react';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TYPES
-// ─────────────────────────────────────────────────────────────────────────────
-interface Counsellor {
-  id: number;
-  full_name: string;
-  email: string;
-  department: string;
-}
-
-interface TimeSlot {
-  id: string;
-  time: string;
-  available: boolean;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// DATA
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ── Types & Data unchanged ──
+interface Counsellor { id: number; full_name: string; email: string; department: string; }
+interface TimeSlot { id: string; time: string; available: boolean; }
 
 const TIME_SLOTS: TimeSlot[] = [
-  { id: 't1', time: '08:00', available: true  },
-  { id: 't2', time: '09:00', available: true  },
-  { id: 't3', time: '10:00', available: true  },
-  { id: 't4', time: '11:00', available: true  },
-  { id: 't5', time: '12:00', available: false },
-  { id: 't6', time: '14:00', available: true  },
-  { id: 't7', time: '15:00', available: true  },
-  { id: 't8', time: '16:00', available: true  },
+  { id:'t1', time:'08:00', available:true  }, { id:'t2', time:'09:00', available:true  },
+  { id:'t3', time:'10:00', available:true  }, { id:'t4', time:'11:00', available:true  },
+  { id:'t5', time:'12:00', available:false }, { id:'t6', time:'14:00', available:true  },
+  { id:'t7', time:'15:00', available:true  }, { id:'t8', time:'16:00', available:true  },
+];
+const SESSION_TYPES = [
+  { key:'Physical', desc:'Meet in person at the Student Affairs Building', icon: Users },
+  { key:'Video',    desc:'Join a secure video call from anywhere',          icon: Video },
+  { key:'Chat',     desc:'Text-based secure messaging session',             icon: MessageSquare },
 ];
 
-const SESSION_TYPES = ['Physical', 'Video', 'Chat'];
-
-// Generate next 7 days
 function getNextDays() {
-  const days = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date();
-    d.setDate(d.getDate() + i);
-    days.push({
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() + i);
+    return {
       id: i.toString(),
-      day: d.toLocaleDateString('en-GB', { weekday: 'short' }),
+      day:  d.toLocaleDateString('en-GB', { weekday:'short' }),
       date: d.getDate(),
-      month: d.toLocaleDateString('en-GB', { month: 'short' }),
-      full: d.toLocaleDateString('en-GB', {
-        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-      }),
-      isoDate: d.toISOString().split('T')[0]
-    });
-  }
-  return days;
+      month:d.toLocaleDateString('en-GB', { month:'short' }),
+      full: d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' }),
+      isoDate: d.toISOString().split('T')[0],
+    };
+  });
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STEP INDICATOR
-// ─────────────────────────────────────────────────────────────────────────────
-function StepIndicator({ step }: { step: number }) {
-  const steps = ['Choose Counsellor', 'Pick Date & Time', 'Session Type', 'Confirm'];
+// ── Step Indicator ──
+function StepIndicator({ step, dm }: { step: number; dm: boolean }) {
+  const steps = ['Choose Counsellor','Date & Time','Session Type','Confirm'];
   return (
-    <div className="flex items-center gap-2 mb-6">
-      {steps.map((s, i) => (
-        <div key={s} className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5">
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all
-              ${i + 1 === step ? 'bg-[#1a5c2a] text-white' : i + 1 < step ? 'bg-[#e8f5ec] text-[#1a5c2a]' : 'bg-gray-100 text-gray-400'}`}>
-              {i + 1 < step ? (
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-              ) : i + 1}
+    <div className="flex items-center gap-1.5 mb-6 flex-wrap">
+      {steps.map((s, i) => {
+        const num   = i + 1;
+        const done  = num < step;
+        const active = num === step;
+        return (
+          <div key={s} className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5">
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-all"
+                style={active
+                  ? { background:'#008751', color:'#fff' }
+                  : done
+                    ? { background: dm ? '#0d1f14' : '#f0faf4', color:'#008751', border:'2px solid #b6e6cc' }
+                    : { background: dm ? '#0d1f14' : '#f0faf4', color: dm ? '#3B6D11' : '#b6e6cc', border: `1px solid ${dm ? '#1a3d2a' : '#b6e6cc'}` }
+                }>
+                {done ? <Check size={11} /> : num}
+              </div>
+              <span className="text-[11px] font-semibold hidden md:block"
+                style={{ color: active ? '#008751' : done ? (dm ? '#6ee7a0' : '#3B6D11') : (dm ? '#1a3d2a' : '#b6e6cc') }}>
+                {s}
+              </span>
             </div>
-            <span className={`text-[11px] font-medium hidden md:block
-              ${i + 1 === step ? 'text-[#1a5c2a]' : i + 1 < step ? 'text-gray-500' : 'text-gray-300'}`}>
-              {s}
-            </span>
+            {i < steps.length - 1 && (
+              <div className="h-px w-6 md:w-8 transition-colors"
+                style={{ background: done ? '#008751' : (dm ? '#1a3d2a' : '#b6e6cc') }} />
+            )}
           </div>
-          {i < steps.length - 1 && (
-            <div className={`h-px w-6 md:w-10 ${i + 1 < step ? 'bg-[#1a5c2a]' : 'bg-gray-200'}`} />
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MAIN PAGE
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Main Page ──
 export default function BookSessionPage() {
-  const [step, setStep] = useState(1);
-  const [counsellors, setCounsellors] = useState<Counsellor[]>([]);
+  const [dm, setDm] = useState(false);
+  const [step,               setStep]               = useState(1);
+  const [counsellors,        setCounsellors]        = useState<Counsellor[]>([]);
   const [loadingCounsellors, setLoadingCounsellors] = useState(true);
   const [selectedCounsellor, setSelectedCounsellor] = useState<Counsellor | null>(null);
-  const [selectedDay, setSelectedDay] = useState<string | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
-  const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [note, setNote] = useState('');
-  const [booked, setBooked] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
+  const [selectedDay,        setSelectedDay]        = useState<string | null>(null);
+  const [selectedSlot,       setSelectedSlot]       = useState<TimeSlot | null>(null);
+  const [selectedType,       setSelectedType]       = useState<string | null>(null);
+  const [note,               setNote]               = useState('');
+  const [booked,             setBooked]             = useState(false);
+  const [loading,            setLoading]            = useState(false);
+  const [error,              setError]              = useState('');
   const days = getNextDays();
 
-  // Load real counsellors from backend 
-  useEffect(() =>{
-    getCounsellors().then((data) => {
-      setCounsellors(data);
-      setLoadingCounsellors(false);
-    });
+  useEffect(() => {
+    if (localStorage.getItem('theme') === 'dark') setDm(true);
+    const handler = (e: Event) => setDm((e as CustomEvent<{isDarkMode:boolean}>).detail.isDarkMode);
+    window.addEventListener('themeToggle', handler);
+    return () => window.removeEventListener('themeToggle', handler);
+  }, []);
+
+  useEffect(() => {
+    getCounsellors().then(data => { setCounsellors(data); setLoadingCounsellors(false); });
   }, []);
 
   async function confirm() {
     if (!selectedCounsellor || !selectedSlot || !selectedType) return;
-
-    setLoading(true);
-    setError('');
-
+    setLoading(true); setError('');
     const dayData = days.find(d => d.id === selectedDay);
-
     try {
       const res = await bookAppointment({
-        counsellor: Number (selectedCounsellor.id),
+        counsellor: Number(selectedCounsellor.id),
         session_type: selectedType,
         date: dayData?.isoDate ?? '',
         time: selectedSlot.time + ':00',
         duration: 45,
         note: note || undefined,
       });
-
-      if (res.ok) {
-        setBooked(true);
-      } else {
-        const data = await res.json();
-        setError(data.error || 'Booking failed. Please try again.')
-      }
-    } catch {
-      setError('Something wentwrong. Please try again');
-    } finally {
-      setLoading(false);
-    }
+      if (res.ok) { setBooked(true); }
+      else { const data = await res.json(); setError(data.error || 'Booking failed. Please try again.'); }
+    } catch { setError('Something went wrong. Please try again.'); }
+    finally { setLoading(false); }
   }
 
-  if (booked) {
-    return (
-      <div className="px-6 py-5 pb-10 flex items-center justify-center min-h-[60vh]">
-        <div className="bg-white border border-gray-100 rounded-2xl p-8 max-w-md w-full text-center">
-          <div className="w-14 h-14 rounded-full bg-[#e8f5ec] flex items-center justify-center mx-auto mb-4">
-            <svg className="w-7 h-7 stroke-[#1a5c2a]" viewBox="0 0 24 24" fill="none" strokeWidth="2">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-          </div>
-          <h2 className="text-[18px] font-bold text-gray-900 mb-1">Session Booked!</h2>
-          <p className="text-[12px] text-gray-500 mb-4">
-            Your session with <strong>{selectedCounsellor?.full_name}</strong> has been confirmed for{' '}
-            <strong>{days.find(d => d.id === selectedDay)?.full}</strong> at{' '}
-            <strong>{selectedSlot?.time}</strong>.
-          </p>
-          <div className="bg-[#e8f5ec] border border-[#b6dfc0] rounded-xl px-4 py-3 mb-5 text-left">
-            <div className="grid grid-cols-2 gap-2 text-[11px]">
-              <div>
-                <p className="text-gray-400">Counsellor</p>
-                <p className="font-semibold text-gray-800">{selectedCounsellor?.full_name}</p>
+  // ── colour tokens ──
+  const C = {
+    pageBg:    dm ? '#0a130d' : 'transparent',
+    cardBg:    dm ? '#0d1f14' : '#f0faf4',
+    cardBorder:dm ? '#1a3d2a' : '#b6e6cc',
+    h:         dm ? '#d1fae5' : '#1a3d1f',
+    sub:       dm ? '#6ee7a0' : '#3B6D11',
+    label:     dm ? '#6ee7a0' : '#3B6D11',
+    inputBg:   dm ? '#0d1f14' : '#fff',
+    inputText: dm ? '#d1fae5' : '#1a3d1f',
+    backBg:    dm ? '#0d1f14' : '#f0faf4',
+    backTxt:   dm ? '#6ee7a0' : '#3B6D11',
+    warnBg:    dm ? '#1a1200' : '#fdf6e8',
+    warnBdr:   dm ? '#3d2e00' : '#f0d08a',
+    warnTxt:   dm ? '#fde047' : '#854F0B',
+    summBg:    dm ? '#0d1f14' : '#f0faf4',
+    rowBdr:    dm ? '#1a3d2a' : '#b6e6cc',
+    lbl:       dm ? '#4ade80' : '#3B6D11',
+    val:       dm ? '#d1fae5' : '#1a3d1f',
+    unavailBg: dm ? '#1f0d0d' : '#fdf0f0',
+    unavailBdr:dm ? '#3d1a1a' : '#f5bebe',
+    unavailTxt:dm ? '#7a2a2a' : '#f5bebe',
+  };
+
+  const cardStyle   = { background: C.cardBg, border: `1px solid ${C.cardBorder}` };
+  const sectionLabel = (txt: string) => (
+    <p className="text-[11px] font-bold uppercase tracking-[0.08em] mb-3" style={{ color: C.sub }}>{txt}</p>
+  );
+  const backBtn = (onClick: () => void) => (
+    <button onClick={onClick}
+      className="h-10 px-5 rounded-full text-[12px] font-semibold transition-all"
+      style={{ background: C.backBg, border: `1px solid ${C.cardBorder}`, color: C.backTxt }}>
+      Back
+    </button>
+  );
+  const nextBtn = (onClick: () => void, label: string, disabled = false) => (
+    <button onClick={onClick} disabled={disabled}
+      className="flex-1 h-10 rounded-full text-[12px] font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+      style={{ background: '#008751', border:'none', cursor: disabled ? 'not-allowed' : 'pointer' }}>
+      {label}
+    </button>
+  );
+
+  // ── SUCCESS ──
+  if (booked) return (
+    <div className="px-6 py-10 flex items-center justify-center min-h-[60vh]" style={{ background: C.pageBg }}>
+      <div className="rounded-[20px] p-10 max-w-md w-full text-center" style={cardStyle}>
+        <div className="w-14 h-14 rounded-full bg-[#008751] flex items-center justify-center mx-auto mb-4">
+          <Check size={26} className="text-white" />
+        </div>
+        <h2 className="text-[20px] font-bold mb-1.5" style={{ color: C.h }}>Session Booked!</h2>
+        <p className="text-[12px] mb-5 leading-relaxed" style={{ color: C.sub }}>
+          Your session with <strong>{selectedCounsellor?.full_name}</strong> has been confirmed for{' '}
+          <strong>{days.find(d => d.id === selectedDay)?.full}</strong> at <strong>{selectedSlot?.time}</strong>.
+        </p>
+        <div className="rounded-[14px] p-4 mb-5" style={{ background: dm ? '#071209' : '#f0faf4', border: `1px solid ${C.cardBorder}` }}>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              ['Counsellor',    selectedCounsellor?.full_name ?? ''],
+              ['Session Type',  selectedType ?? ''],
+              ['Date',          days.find(d => d.id === selectedDay)?.full ?? ''],
+              ['Time',          selectedSlot?.time ?? ''],
+            ].map(([l, v]) => (
+              <div key={l}>
+                <p className="text-[10px] mb-0.5" style={{ color: C.lbl }}>{l}</p>
+                <p className="text-[12px] font-semibold" style={{ color: C.val }}>{v}</p>
               </div>
-              <div>
-                <p className="text-gray-400">Session Type</p>
-                <p className="font-semibold text-gray-800">{selectedType}</p>
-              </div>
-              <div>
-                <p className="text-gray-400">Date</p>
-                <p className="font-semibold text-gray-800">{days.find(d => d.id === selectedDay)?.full}</p>
-              </div>
-              <div>
-                <p className="text-gray-400">Time</p>
-                <p className="font-semibold text-gray-800">{selectedSlot?.time}</p>
-              </div>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <Link
-              href="/dashboard/student/sessions"
-              className="flex-1 h-10 bg-[#1a5c2a] text-white rounded-xl text-[12px] font-semibold hover:bg-[#2d7a3e] transition flex items-center justify-center"
-            >
-              View My Sessions
-            </Link>
-            <Link
-              href="/dashboard/student"
-              className="flex-1 h-10 border border-gray-200 text-gray-600 rounded-xl text-[12px] font-medium hover:bg-gray-50 transition flex items-center justify-center"
-            >
-              Back to Dashboard
-            </Link>
+            ))}
           </div>
         </div>
+        <div className="flex gap-3">
+          <Link href="/dashboard/student/appointments"
+            className="flex-1 h-10 rounded-full text-white text-[12px] font-bold flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity"
+            style={{ background: '#008751' }}>
+            View My Sessions <ArrowRight size={12} />
+          </Link>
+          <Link href="/dashboard/student"
+            className="flex-1 h-10 rounded-full text-[12px] font-semibold flex items-center justify-center transition-all"
+            style={{ background: C.backBg, border: `1px solid ${C.cardBorder}`, color: C.backTxt }}>
+            Dashboard
+          </Link>
+        </div>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
-    <div className="px-6 py-5 pb-10">
+    <div className="px-6 py-5 pb-10" style={{ background: C.pageBg }}>
 
       {/* Header */}
       <div className="mb-5">
-        <h2 className="text-[18px] font-semibold text-gray-900 tracking-[-0.4px]">Book a Session</h2>
-        <p className="text-[12px] text-gray-500 mt-0.5">
+        <h2 className="text-[22px] font-bold" style={{ color: C.h }}>Book a Session</h2>
+        <p className="text-[17px] mt-1" style={{ color: C.sub }}>
           Schedule a counselling session with an available counsellor
         </p>
       </div>
 
-      <StepIndicator step={step} />
+      <StepIndicator step={step} dm={dm} />
 
-      {/* STEP 1 — Choose Counsellor */}
+      {/* ── STEP 1 — Choose Counsellor ── */}
       {step === 1 && (
         <div>
-          <h3 className="text-[13px] font-semibold text-gray-700 mb-3">Available Counsellors</h3>
-
+          {sectionLabel('Available Counsellors')}
           {loadingCounsellors ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white border border-gray-100 rounded-2xl p-5 animate-pulse">
+            <div className="grid grid-cols-1  md:grid-cols-3 gap-4">
+              {[1,2,3].map(i => (
+                <div key={i} className="rounded-[20px] p-5 animate-pulse" style={cardStyle}>
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-11 h-11 rounded-full bg-gray-200" />
+                    <div className="w-11 h-11 rounded-full " style={{ background: C.cardBorder }} />
                     <div className="space-y-1.5">
-                      <div className="h-3 w-24 bg-gray-200 rounded" />
-                      <div className="h-2.5 w-16 bg-gray-100 rounded" />
+                      <div className="h-3 w-24 rounded" style={{ background: C.cardBorder }} />
+                      <div className="h-2.5 w-16 rounded" style={{ background: C.cardBorder }} />
                     </div>
                   </div>
-                  <div className="h-8 bg-gray-100 rounded-xl" />
+                  <div className="h-8 rounded-xl" style={{ background: C.cardBorder }} />
                 </div>
               ))}
             </div>
           ) : counsellors.length === 0 ? (
-            <div className="bg-white border border-gray-100 rounded-2xl p-8 text-center">
-              <p className="text-[12px] text-gray-400">
+            <div className="rounded-[20px] p-8 text-center" style={cardStyle}>
+              <p className="text-[15px]" style={{ color: C.sub }}>
                 No counsellors available at the moment. Please check back later.
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {counsellors.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => { setSelectedCounsellor(c); setStep(2); }}
-                  className={`bg-white border rounded-2xl p-5 text-left hover:shadow-md transition-all duration-200
-                    ${selectedCounsellor?.id === c.id ? 'border-[#1a5c2a]' : 'border-gray-100'}`}
-                >
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-11 h-11 rounded-full bg-[#1a5c2a] flex items-center justify-center text-white text-[13px] font-bold">
-                      {c.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+              {counsellors.map(c => {
+                const initials = c.full_name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
+                const isSelected = selectedCounsellor?.id === c.id;
+                return (
+                  <button key={c.id}
+                    onClick={() => { setSelectedCounsellor(c); setStep(2); }}
+                    className="relative rounded-[20px] p-5 text-left overflow-hidden transition-all duration-200 hover:-translate-y-[2px]"
+                    style={{
+                      background: isSelected ? (dm ? '#071a0d' : '#e6f7ef') : C.cardBg,
+                      border: `1px solid ${isSelected ? '#008751' : C.cardBorder}`,
+                      boxShadow: isSelected ? '0 8px 24px rgba(0,135,81,0.12)' : 'none',
+                    }}>
+                    <div className="absolute bottom-[-16px] right-[-16px] w-[60px] h-[60px] rounded-full opacity-[0.07] pointer-events-none"
+                      style={{ background: '#008751' }} />
+                    <div className="w-11 h-11 rounded-full bg-[#008751] flex items-center justify-center text-white text-[13px] font-bold mb-3"
+                      style={{ border:'2px solid rgba(0,135,81,0.2)' }}>
+                      {initials}
                     </div>
-                    <div>
-                      <p className="text-[13px] font-semibold text-gray-900">{c.full_name}</p>
-                      <p className="text-[11px] text-gray-500">Counsellor</p>
+                    <p className="text-[13px] font-bold mb-0.5" style={{ color: C.h }}>{c.full_name}</p>
+                    <p className="text-[11px] mb-2" style={{ color: C.sub }}>Counsellor</p>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-[6px] h-[6px] rounded-full bg-green-400" />
+                      <span className="text-[10px]" style={{ color: C.sub }}>Available</span>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-green-500" />
-                    <span className="text-[11px] text-gray-500">Available</span>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
       )}
 
-      {/* STEP 2 — Pick Date & Time */}
-       {step === 2 && (
+      {/* ── STEP 2 — Date & Time ── */}
+      {step === 2 && (
         <div className="max-w-2xl">
-          <h3 className="text-[13px] font-semibold text-gray-700 mb-3">Select a Date</h3>
+          {sectionLabel('Select a Date')}
           <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
-            {days.map((d) => (
-              <button
-                key={d.id}
-                onClick={() => setSelectedDay(d.id)}
-                className={`flex flex-col items-center px-4 py-3 rounded-xl border min-w-[64px] transition-all
-                  ${selectedDay === d.id ? 'bg-[#1a5c2a] border-[#1a5c2a] text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-[#1a5c2a]'}`}
-              >
-                <span className="text-[10px] font-medium">{d.day}</span>
-                <span className="text-[18px] font-bold leading-tight">{d.date}</span>
-                <span className="text-[10px]">{d.month}</span>
-              </button>
-            ))}
+            {days.map(d => {
+              const active = selectedDay === d.id;
+              return (
+                <button key={d.id} onClick={() => setSelectedDay(d.id)}
+                  className="flex flex-col items-center px-4 py-3 rounded-[14px] min-w-[58px] flex-shrink-0 transition-all duration-150"
+                  style={{
+                    background: active ? '#008751' : C.cardBg,
+                    border: `1px solid ${active ? '#008751' : C.cardBorder}`,
+                    color: active ? '#fff' : C.sub,
+                  }}>
+                  <span className="text-[9px] font-600 uppercase tracking-wide">{d.day}</span>
+                  <span className="text-[20px] font-bold leading-tight">{d.date}</span>
+                  <span className="text-[9px]">{d.month}</span>
+                </button>
+              );
+            })}
           </div>
 
           {selectedDay && (
             <>
-              <h3 className="text-[13px] font-semibold text-gray-700 mb-3">Select a Time</h3>
+              {sectionLabel('Select a Time')}
               <div className="grid grid-cols-4 gap-2 mb-5">
-                {TIME_SLOTS.map((slot) => (
-                  <button
-                    key={slot.id}
-                    disabled={!slot.available}
-                    onClick={() => setSelectedSlot(slot)}
-                    className={`h-10 rounded-xl border text-[12px] font-medium transition-all
-                      ${!slot.available ? 'bg-gray-50 border-gray-100 text-gray-300 cursor-not-allowed' :
-                        selectedSlot?.id === slot.id ? 'bg-[#1a5c2a] border-[#1a5c2a] text-white' :
-                        'bg-white border-gray-200 text-gray-700 hover:border-[#1a5c2a]'}`}
-                  >
-                    {slot.time}
-                  </button>
-                ))}
+                {TIME_SLOTS.map(slot => {
+                  const active = selectedSlot?.id === slot.id;
+                  return (
+                    <button key={slot.id} disabled={!slot.available}
+                      onClick={() => setSelectedSlot(slot)}
+                      className="h-10 rounded-[12px] text-[12px] font-semibold transition-all"
+                      style={!slot.available
+                        ? { background: C.unavailBg, border: `1px solid ${C.unavailBdr}`, color: C.unavailTxt, cursor:'not-allowed' }
+                        : active
+                          ? { background: '#008751', border:'1px solid #008751', color:'#fff' }
+                          : { background: C.cardBg, border: `1px solid ${C.cardBorder}`, color: C.h }
+                      }>
+                      {slot.time}
+                    </button>
+                  );
+                })}
               </div>
             </>
           )}
 
           <div className="flex gap-3">
-            <button onClick={() => setStep(1)} className="h-10 px-5 border border-gray-200 rounded-xl text-[12px] text-gray-600 font-medium hover:bg-gray-50 transition">
-              Back
-            </button>
-            <button
-              onClick={() => setStep(3)}
-              disabled={!selectedDay || !selectedSlot}
-              className="h-10 px-5 bg-[#1a5c2a] text-white rounded-xl text-[12px] font-semibold disabled:opacity-40 hover:bg-[#2d7a3e] transition"
-            >
-              Continue
-            </button>
+            {backBtn(() => setStep(1))}
+            {nextBtn(() => setStep(3), 'Continue', !selectedDay || !selectedSlot)}
           </div>
         </div>
       )}
 
-      {/* STEP 3 — Session Type */}
+      {/* ── STEP 3 — Session Type ── */}
       {step === 3 && (
         <div className="max-w-md">
-          <h3 className="text-[13px] font-semibold text-gray-700 mb-3">How would you like to meet?</h3>
-          <div className="space-y-3 mb-5">
-            {SESSION_TYPES.map((type) => (
-              <button
-                key={type}
-                onClick={() => setSelectedType(type)}
-                className={`w-full flex items-center gap-4 p-4 rounded-xl border text-left transition-all
-                  ${selectedType === type ? 'border-[#1a5c2a] bg-[#e8f5ec]' : 'border-gray-200 bg-white hover:border-[#1a5c2a]'}`}
-              >
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center
-                  ${selectedType === type ? 'bg-[#1a5c2a]' : 'bg-gray-100'}`}>
-                  {type === 'Physical' && (
-                    <svg className={`w-4 h-4 ${selectedType === type ? 'stroke-white' : 'stroke-gray-500'}`} viewBox="0 0 24 24" fill="none" strokeWidth="1.75">
-                      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
-                    </svg>
-                  )}
-                  {type === 'Video' && (
-                    <svg className={`w-4 h-4 ${selectedType === type ? 'stroke-white' : 'stroke-gray-500'}`} viewBox="0 0 24 24" fill="none" strokeWidth="1.75">
-                      <polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/>
-                    </svg>
-                  )}
-                  {type === 'Chat' && (
-                    <svg className={`w-4 h-4 ${selectedType === type ? 'stroke-white' : 'stroke-gray-500'}`} viewBox="0 0 24 24" fill="none" strokeWidth="1.75">
-                      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-                    </svg>
-                  )}
-                </div>
-                <div>
-                  <p className="text-[13px] font-semibold text-gray-900">{type} Session</p>
-                  <p className="text-[11px] text-gray-500">
-                    {type === 'Physical' && 'Meet in person at the Student Affairs Building'}
-                    {type === 'Video' && 'Join a secure video call from anywhere'}
-                    {type === 'Chat' && 'Text-based secure messaging session'}
-                  </p>
-                </div>
-                {selectedType === type && (
-                  <div className="ml-auto w-5 h-5 rounded-full bg-[#1a5c2a] flex items-center justify-center shrink-0">
-                    <svg className="w-3 h-3 stroke-white" viewBox="0 0 24 24" fill="none" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
+          {sectionLabel('How would you like to meet?')}
+          <div className="space-y-2.5 mb-5">
+            {SESSION_TYPES.map(({ key, desc, icon: Icon }) => {
+              const active = selectedType === key;
+              return (
+                <button key={key} onClick={() => setSelectedType(key)}
+                  className="w-full flex items-center gap-3.5 p-4 rounded-[16px] text-left transition-all"
+                  style={{
+                    background: active ? (dm ? '#071a0d' : '#e6f7ef') : C.cardBg,
+                    border: `1px solid ${active ? '#008751' : C.cardBorder}`,
+                  }}>
+                  <div className="w-[38px] h-[38px] rounded-[12px] flex items-center justify-center shrink-0"
+                    style={{ background: active ? '#008751' : (dm ? '#0d2e1a' : 'rgba(0,135,81,0.1)') }}>
+                    <Icon size={17} style={{ color: active ? '#fff' : '#008751' }} />
                   </div>
-                )}
-              </button>
-            ))}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-bold" style={{ color: C.h }}>{key} Session</p>
+                    <p className="text-[11px] mt-0.5" style={{ color: C.sub }}>{desc}</p>
+                  </div>
+                  {active && (
+                    <div className="w-5 h-5 rounded-full bg-[#008751] flex items-center justify-center shrink-0">
+                      <Check size={11} className="text-white" />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
-          {/* Optional note */}
           <div className="mb-5">
-            <label className="block text-[12px] font-medium text-gray-600 mb-1.5">
-              Add a note <span className="text-gray-400 font-normal">(optional)</span>
+            <label className="block text-[12px] font-semibold mb-2" style={{ color: C.label }}>
+              Add a note <span style={{ color: C.sub, fontWeight:400 }}>(optional)</span>
             </label>
             <textarea
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Briefly describe what you'd like to talk about..."
+              value={note} onChange={e => setNote(e.target.value)}
+              placeholder="Briefly describe what you'd like to talk about…"
               rows={3}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-[12px] text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-[#1a5c2a] focus:ring-2 focus:ring-[#1a5c2a]/10 resize-none transition"
+              className="w-full rounded-[14px] px-4 py-3 text-[12px] resize-none focus:outline-none transition-all"
+              style={{ background: C.inputBg, border: `1px solid ${C.cardBorder}`, color: C.inputText }}
+              onFocus={e => { e.currentTarget.style.borderColor='#008751'; e.currentTarget.style.boxShadow='0 0 0 3px rgba(0,135,81,0.1)'; }}
+              onBlur={e => { e.currentTarget.style.borderColor=C.cardBorder; e.currentTarget.style.boxShadow='none'; }}
             />
           </div>
 
           <div className="flex gap-3">
-            <button
-              onClick={() => setStep(2)}
-              className="h-10 px-5 border border-gray-200 rounded-xl text-[12px] text-gray-600 font-medium hover:bg-gray-50 transition"
-            >
-              Back
-            </button>
-            <button
-              onClick={() => setStep(4)}
-              disabled={!selectedType}
-              className="h-10 px-5 bg-[#1a5c2a] text-white rounded-xl text-[12px] font-semibold disabled:opacity-40 hover:bg-[#2d7a3e] transition"
-            >
-              Continue
-            </button>
+            {backBtn(() => setStep(2))}
+            {nextBtn(() => setStep(4), 'Continue', !selectedType)}
           </div>
         </div>
       )}
 
-      {/* STEP 4 — Confirm */}
+      {/* ── STEP 4 — Confirm ── */}
       {step === 4 && (
         <div className="max-w-md">
-          <h3 className="text-[13px] font-semibold text-gray-700 mb-3">Confirm your booking</h3>
+          {sectionLabel('Confirm your booking')}
 
-          <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden mb-4">
-            <div className="bg-[#1a5c2a] px-5 py-3">
-              <p className="text-[11px] font-bold text-yellow-400 uppercase tracking-widest">Booking Summary</p>
+          {/* Summary card */}
+          <div className="rounded-[20px] overflow-hidden mb-4" style={{ border: `1px solid ${C.cardBorder}` }}>
+            {/* Header with photo overlay */}
+            <div className="relative px-5 py-4 overflow-hidden">
+              <div className="absolute inset-0 bg-cover bg-center"
+                style={{ backgroundImage:"url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&q=80')" }} />
+              <div className="absolute inset-0" style={{ background:'linear-gradient(105deg, rgba(0,40,20,0.96) 0%, rgba(0,70,35,0.90) 100%)' }} />
+              <p className="relative text-[10px] font-bold text-yellow-300 uppercase tracking-[0.1em]">★ Booking Summary</p>
             </div>
-            <div className="px-5 py-4 space-y-3">
+
+            {/* Rows */}
+            <div className="px-5" style={{ background: C.summBg }}>
               {[
-                { label: 'Counsellor', value: `${selectedCounsellor?.full_name}` },
-                { label: 'Date', value: days.find(d => d.id === selectedDay)?.full ?? '' },
-                { label: 'Time', value: selectedSlot?.time ?? '' },
-                { label: 'Session Type', value: selectedType ?? '' },
-                { label: 'Note', value: note || 'None' },
-              ].map((item) => (
-                <div key={item.label} className="flex items-start justify-between gap-4">
-                  <p className="text-[11px] text-gray-400 shrink-0">{item.label}</p>
-                  <p className="text-[12px] font-medium text-gray-800 text-right">{item.value}</p>
+                ['Counsellor',   selectedCounsellor?.full_name ?? ''],
+                ['Date',         days.find(d => d.id === selectedDay)?.full ?? ''],
+                ['Time',         selectedSlot?.time ?? ''],
+                ['Session Type', selectedType ?? ''],
+                ['Note',         note || 'None'],
+              ].map(([l, v]) => (
+                <div key={l} className="flex items-start justify-between gap-4 py-3"
+                  style={{ borderBottom: `1px solid ${C.rowBdr}` }}>
+                  <p className="text-[11px]" style={{ color: C.lbl }}>{l}</p>
+                  <p className="text-[12px] font-semibold text-right" style={{ color: C.val }}>{v}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-yellow-50 border border-yellow-100 rounded-xl px-4 py-3 mb-5">
-            <p className="text-[11px] text-yellow-700 leading-relaxed">
-              By confirming, you agree to attend this session. Please cancel at least 2 hours in advance if you cannot attend.
-            </p>
+          {/* Warning */}
+          <div className="rounded-[14px] px-4 py-3 mb-5 text-[11px] leading-relaxed"
+            style={{ background: C.warnBg, border: `1px solid ${C.warnBdr}`, color: C.warnTxt }}>
+            ⚠️ By confirming, you agree to attend this session. Please cancel at least 2 hours in advance if you cannot attend.
           </div>
 
+          {error && (
+            <div className="rounded-[14px] px-4 py-3 mb-4 text-[11px]"
+              style={{ background: dm ? '#1f0d0d' : '#fdf0f0', border: `1px solid ${dm ? '#3d1a1a' : '#f5bebe'}`, color: dm ? '#fca5a5' : '#A32D2D' }}>
+              {error}
+            </div>
+          )}
+
           <div className="flex gap-3">
-            <button
-              onClick={() => setStep(3)}
-              className="h-10 px-5 border border-gray-200 rounded-xl text-[12px] text-gray-600 font-medium hover:bg-gray-50 transition"
-            >
-              Back
-            </button>
-            <button
-              onClick={confirm}
-              disabled={loading}
-              className="flex-1 h-10 bg-[#1a5c2a] text-white rounded-xl text-[12px] font-semibold hover:bg-[#2d7a3e] disabled:opacity-60 transition"
-            >
-              {loading ? 'Booking...' : 'Confirm Booking'}
+            {backBtn(() => setStep(3))}
+            <button onClick={confirm} disabled={loading}
+              className="flex-1 h-10 rounded-full text-[12px] font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+              style={{ background: '#008751', border:'none' }}>
+              {loading ? 'Booking…' : 'Confirm Booking'}
             </button>
           </div>
         </div>

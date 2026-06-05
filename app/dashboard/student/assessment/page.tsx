@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   ArrowRight, ChevronRight, Sparkles, HeartPulse,
@@ -34,7 +34,12 @@ const ACCENT = {
   blue:   { bg: '#eef5fd', border: '#b3d3f5', icon: '#378ADD', label: '#0c2f52', desc: '#185FA5', fill: '#378ADD', tag: '#eef5fd', tagText: '#185FA5' },
   amber:  { bg: '#fdf6e8', border: '#f0d08a', icon: '#BA7517', label: '#412402', desc: '#854F0B', fill: '#BA7517', tag: '#fdf6e8', tagText: '#854F0B' },
 } as const;
-type AccentKey = keyof typeof ACCENT;
+
+const ACCENT_DARK = {
+  purple: { bg: '#1a173a', border: '#3f3a6f', icon: '#a5b4fc', label: '#e0e7ff', desc: '#c7d2fe', fill: '#a5b4fc', tag: '#2d2a59', tagText: '#c7d2fe' },
+  blue:   { bg: '#15253f', border: '#2d4d78', icon: '#60a5fa', label: '#dbeafe', desc: '#93c5fd', fill: '#60a5fa', tag: '#193052', tagText: '#bfdbfe' },
+  amber:  { bg: '#3d2a12', border: '#725118', icon: '#fbbf24', label: '#fff7c0', desc: '#fde68a', fill: '#fbbf24', tag: '#4e3715', tagText: '#fde68a' },
+} as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DATA
@@ -129,8 +134,8 @@ function getResult(type: AssessmentType, score: number) {
 // ─────────────────────────────────────────────────────────────────────────────
 // ASSESSMENT CARD
 // ─────────────────────────────────────────────────────────────────────────────
-function AssessmentCard({ assessment, onStart }: { assessment: Assessment; onStart: () => void }) {
-  const a = ACCENT[assessment.accentKey];
+function AssessmentCard({ assessment, onStart, isDarkMode }: { assessment: Assessment; onStart: () => void; isDarkMode: boolean }) {
+  const a = isDarkMode ? ACCENT_DARK[assessment.accentKey] : ACCENT[assessment.accentKey];
   const Icon = assessment.icon;
   return (
     <div
@@ -179,13 +184,13 @@ function AssessmentCard({ assessment, onStart }: { assessment: Assessment; onSta
 // QUIZ SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
 function QuizScreen({
-  assessment, onComplete, onBack,
+  assessment, onComplete, onBack, isDarkMode,
 }: {
-  assessment: Assessment; onComplete: (score: number) => void; onBack: () => void;
+  assessment: Assessment; onComplete: (score: number) => void; onBack: () => void; isDarkMode: boolean;
 }) {
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [current, setCurrent] = useState(0);
-  const a = ACCENT[assessment.accentKey];
+  const a = isDarkMode ? ACCENT_DARK[assessment.accentKey] : ACCENT[assessment.accentKey];
   const Icon = assessment.icon;
 
   const total = assessment.questions.length;
@@ -249,7 +254,10 @@ function QuizScreen({
       {/* Question card */}
       <div
         className="rounded-[20px] p-6 mb-4"
-        style={{ background: '#ffffff', border: `1px solid ${a.border}` }}
+        style={{
+          background: isDarkMode ? '#111827' : '#ffffff',
+          border: isDarkMode ? '1px solid rgba(148,163,184,0.20)' : `1px solid ${a.border}`,
+        }}
       >
         <p className="text-[12px] font-medium mb-2" style={{ color: a.desc }}>
           Over the last 2 weeks, how often have you been bothered by:
@@ -325,13 +333,16 @@ function QuizScreen({
 // RESULT SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
 function ResultScreen({
-  assessment, score, onRetake, onBack,
+  assessment, score, onRetake, onBack, isDarkMode,
 }: {
-  assessment: Assessment; score: number; onRetake: () => void; onBack: () => void;
+  assessment: Assessment; score: number; onRetake: () => void; onBack: () => void; isDarkMode: boolean;
 }) {
-  const a = ACCENT[assessment.accentKey];
+  const a = isDarkMode ? ACCENT_DARK[assessment.accentKey] : ACCENT[assessment.accentKey];
   const Icon = assessment.icon;
   const result = getResult(assessment.id, score);
+  const resultStyle = isDarkMode
+    ? { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }
+    : { background: result.bg, border: `1px solid ${result.border}` };
   const maxScore = assessment.options.length - 1;
   const maxTotal = assessment.questions.length * maxScore;
   const pct = Math.round((score / maxTotal) * 100);
@@ -386,7 +397,7 @@ function ResultScreen({
         {/* Result label */}
         <div
           className="inline-flex items-center gap-2 px-5 py-2 rounded-full mb-4"
-          style={{ background: result.bg, border: `1px solid ${result.border}` }}
+          style={resultStyle}
         >
           <span className="w-2 h-2 rounded-full" style={{ background: result.color }} />
           <span className="text-[15px] font-bold" style={{ color: result.color }}>{result.label}</span>
@@ -417,9 +428,12 @@ function ResultScreen({
       {/* Disclaimer */}
       <div
         className="rounded-[14px] px-4 py-3"
-        style={{ background: '#fdf6e8', border: '1px solid #f0d08a' }}
+        style={isDarkMode
+          ? { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }
+          : { background: '#fdf6e8', border: '1px solid #f0d08a' }
+        }
       >
-        <p className="text-[12px] leading-relaxed" style={{ color: '#854F0B' }}>
+        <p className="text-[12px] leading-relaxed" style={{ color: isDarkMode ? 'rgba(255,255,255,0.78)' : '#854F0B' }}>
           <strong>Note:</strong> This assessment is a screening tool, not a clinical diagnosis.
           Please speak with a qualified counsellor for professional support.
         </p>
@@ -434,20 +448,71 @@ function ResultScreen({
 export default function AssessmentPage() {
   const [active, setActive] = useState<Assessment | null>(null);
   const [score,  setScore]  = useState<number | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   function startAssessment(a: Assessment) { setActive(a); setScore(null); }
   function completeAssessment(s: number)  { setScore(s); }
-  function retake()                        { setScore(null); }
-  function goBack()                        { setActive(null); setScore(null); }
+  function retake() { setScore(null); }
+  function goBack(){ setActive(null); setScore(null); }
+
+  useEffect(() => {
+    const storedTheme = localStorage.getItem('theme');
+    setIsDarkMode(storedTheme === 'dark');
+
+    const handleThemeChange = () => {
+      setIsDarkMode(localStorage.getItem('theme') === 'dark');
+    };
+
+    window.addEventListener('themeToggle', handleThemeChange);
+
+    return () => {
+      window.removeEventListener('themeToggle', handleThemeChange);
+    };
+  }, []);
+
+  const labelColor = isDarkMode ? '#F9FAFB' : '#111827';
+  const mutedColor = isDarkMode ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.38)';
+  const secondaryTextColor = isDarkMode ? 'rgba(255,255,255,0.72)' : '#3B6D11';
+  const sectionCardStyle = isDarkMode
+    ? { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }
+    : { background: '#f0faf4', border: '1px solid #b6e6cc' };
+  const pageStyle = {
+    background: isDarkMode ? '#020617' : '#f8fafc',
+    color: labelColor,
+  };
+
+  /* ─────────────────────────────────────────
+   QUICK ACTION ACCENT TOKENS
+───────────────────────────────────────────── */
+const QA_LIGHT = {
+  green:  { bg: '#f0faf4', border: '#b6e6cc', icon: '#008751', label: '#1a3d1f', desc: '#3B6D11', cta: '#008751' },
+  blue:   { bg: '#eef5fd', border: '#b3d3f5', icon: '#378ADD', label: '#0c2f52', desc: '#185FA5', cta: '#378ADD' },
+  purple: { bg: '#f3f1fe', border: '#c9c4f4', icon: '#7F77DD', label: '#26215C', desc: '#534AB7', cta: '#7F77DD' },
+  amber:  { bg: '#fdf6e8', border: '#f0d08a', icon: '#BA7517', label: '#412402', desc: '#854F0B', cta: '#BA7517' },
+} as const;
+
+const QA_DARK = {
+  green:  { bg: 'rgba(0,135,81,0.13)',   border: 'rgba(0,135,81,0.28)',   icon: '#00a86b', label: '#bbf7d0', desc: '#86efac', cta: '#00a86b' },
+  blue:   { bg: 'rgba(55,138,221,0.10)', border: 'rgba(55,138,221,0.25)', icon: '#60a5fa', label: '#bfdbfe', desc: '#93c5fd', cta: '#60a5fa' },
+  purple: { bg: 'rgba(127,119,221,0.10)',border: 'rgba(127,119,221,0.25)',icon: '#a5b4fc', label: '#e0e7ff', desc: '#c7d2fe', cta: '#a5b4fc' },
+  amber:  { bg: 'rgba(186,117,23,0.10)', border: 'rgba(186,117,23,0.25)', icon: '#fbbf24', label: '#fef3c7', desc: '#fde68a', cta: '#fbbf24' },
+} as const;
+
+type QAAccentKey = keyof typeof QA_LIGHT;
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6 pb-10">
+    // add data-theme so global css can target dark mode, and keep local fallbacks for inline styles
+    <div data-theme={isDarkMode ? 'dark' : 'light'} className="flex flex-col gap-6 p-4 sm:p-6 pb-10 transition-colors duration-200" style={pageStyle}>
 
       {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 text-[22px]" style={{ color: 'rgba(0,0,0,0.4)' }}>
+      <div
+        className="flex items-center gap-1.5 text-[22px]"
+        style={{ color: isDarkMode ? 'rgba(255,255,255,0.72)' : 'rgba(0,0,0,0.4)' }}>
         <span>Portal</span>
         <ChevronRight size={12} />
-        <span className="font-semibold" style={{ color: '#111827' }}>Wellbeing Assessment</span>
+        <span
+          className="font-semibold"
+          style={{ color: isDarkMode ? '#F9FAFB' : '#111827' }}>Wellbeing Assessment</span>
       </div>
 
       {/* ── Welcome Banner — identical structure to overview ── */}
@@ -456,7 +521,7 @@ export default function AssessmentPage() {
         {/* Photo layer */}
         <div
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1200&q=80')" }}
+          style={{ backgroundImage: "url('https://camhs.huhs.harvard.edu/files/2025/04/homepage-2.jpg')" }}
         />
 
         {/* Green directional overlay */}
@@ -480,8 +545,12 @@ export default function AssessmentPage() {
               Results are confidential and encrypted.
             </p>
             {/* Confidence info pill */}
-            <div className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-xl"
-              style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)' }}>
+            <div
+              className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-xl"
+              style={ isDarkMode
+                ? { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }
+                : { background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)' }
+              }>
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse shrink-0" />
               <p className="text-[13px] text-white/80 font-medium">
                 Responses are confidential &amp; shared only with your counsellor
@@ -496,11 +565,15 @@ export default function AssessmentPage() {
               { label: '2–5 min each',   sub: 'Quick & standardised' },
               { label: 'Encrypted',      sub: 'Data fully protected' },
             ].map((s) => (
-              <div key={s.label}
+              <div
+                key={s.label}
                 className="px-4 py-2.5 rounded-[14px] min-w-[170px]"
-                style={{ background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.16)' }}>
-                <p className="text-[16px] font-bold text-white">{s.label}</p>
-                <p className="text-[13px] text-white/50 mt-0.5">{s.sub}</p>
+                style={ isDarkMode
+                  ? { background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }
+                  : { background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.16)' }
+                }>
+                <p className="text-[16px] font-bold" style={{ color: isDarkMode ? '#F9FAFB' : '#ffffff' }}>{s.label}</p>
+                <p className="text-[13px] mt-0.5" style={{ color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.5)' }}>{s.sub}</p>
               </div>
             ))}
           </div>
@@ -509,37 +582,37 @@ export default function AssessmentPage() {
 
       {/* ── Quiz / Result ── */}
       {active && score === null && (
-        <QuizScreen assessment={active} onComplete={completeAssessment} onBack={goBack} />
+        <QuizScreen assessment={active} onComplete={completeAssessment} onBack={goBack} isDarkMode={isDarkMode} />
       )}
       {active && score !== null && (
-        <ResultScreen assessment={active} score={score} onRetake={retake} onBack={goBack} />
+        <ResultScreen assessment={active} score={score} onRetake={retake} onBack={goBack} isDarkMode={isDarkMode} />
       )}
 
       {/* ── Selection screen ── */}
       {!active && (
         <>
           {/* Section label */}
-          <p className="text-[13px] font-bold uppercase tracking-widest" style={{ color: 'rgba(0,0,0,0.38)' }}>
+          <p className="text-[13px] font-bold uppercase tracking-widest" style={{ color: mutedColor }}>
             Choose an Assessment
           </p>
 
           {/* Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {ASSESSMENTS.map((a) => (
-              <AssessmentCard key={a.id} assessment={a} onStart={() => startAssessment(a)} />
+              <AssessmentCard key={a.id} assessment={a} onStart={() => startAssessment(a)} isDarkMode={isDarkMode} />
             ))}
           </div>
 
           {/* Previous results */}
           <div
             className="rounded-[20px] overflow-hidden"
-            style={{ background: '#f0faf4', border: '1px solid #b6e6cc' }}
+            style={sectionCardStyle}
           >
-            <div className="px-5 py-4" style={{ borderBottom: '1px solid #b6e6cc' }}>
-              <h3 className="text-[16px] font-bold" style={{ color: '#1a3d1f' }}>Previous Results</h3>
+            <div className="px-5 py-4" style={{ borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid #b6e6cc' }}>
+              <h3 className="text-[16px] font-bold" style={{ color: labelColor }}>Previous Results</h3>
             </div>
             <div className="px-5 py-8 text-center">
-              <p className="text-[15px]" style={{ color: '#3B6D11' }}>
+              <p className="text-[15px]" style={{ color: secondaryTextColor }}>
                 No assessments taken yet. Start one above.
               </p>
             </div>

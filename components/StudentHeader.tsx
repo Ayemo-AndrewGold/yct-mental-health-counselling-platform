@@ -136,7 +136,7 @@ const toggleDarkMode = () => {
               className="flex items-center gap-1.5 leading-tight truncate font-bold"
               style={{
                 fontFamily: 'Syne, sans-serif',
-                fontSize: '16px',
+                fontSize: '18px',
                 color: isDarkMode ? '#ffffff' : '#111827',
               }}
             >
@@ -146,7 +146,7 @@ const toggleDarkMode = () => {
             </h1>
             <p
               className="mt-px truncate"
-              style={{ fontSize: '12px', color: isDarkMode ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.42)' }}
+              style={{ fontSize: '13px', color: isDarkMode ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.42)' }}
             >
               <span className="hidden md:inline">{dateStr}</span>
               <span className="md:hidden">Yaba College of Technology</span>

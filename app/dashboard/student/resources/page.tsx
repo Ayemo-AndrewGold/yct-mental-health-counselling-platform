@@ -1,11 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowRight, Search, Star, BookOpen, CheckSquare, Video, FileText, AlertTriangle } from 'lucide-react';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TYPES & DATA — unchanged
-// ─────────────────────────────────────────────────────────────────────────────
 type Category = 'All' | 'Anxiety' | 'Depression' | 'Stress' | 'Wellness' | 'Crisis';
 
 interface Resource {
@@ -34,103 +31,120 @@ const RESOURCES: Resource[] = [
 
 const CATEGORIES: Category[] = ['All', 'Anxiety', 'Depression', 'Stress', 'Wellness', 'Crisis'];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
-const CATEGORY_STYLE: Record<Exclude<Category,'All'>, React.CSSProperties> = {
-  Anxiety:    { background: '#eef5fd', color: '#185FA5' },
-  Depression: { background: '#f3f1fe', color: '#534AB7' },
-  Stress:     { background: '#fdf6e8', color: '#854F0B', border: '1px solid #f0d08a' },
-  Wellness:   { background: '#008751', color: '#fff' },
-  Crisis:     { background: '#fdf0f0', color: '#A32D2D', border: '1px solid #f5bebe' },
-};
-
-const TYPE_STYLE: Record<Resource['type'], React.CSSProperties> = {
-  Article: { background: 'rgba(0,135,81,0.08)', color: '#3B6D11' },
-  Guide:   { background: 'rgba(0,135,81,0.15)', color: '#008751' },
-  Video:   { background: '#f3f1fe', color: '#7F77DD' },
-  PDF:     { background: '#fdf6e8', color: '#BA7517' },
-};
-
 const TYPE_ICON: Record<Resource['type'], React.ElementType> = {
-  Article: BookOpen,
-  Guide:   CheckSquare,
-  Video:   Video,
-  PDF:     FileText,
+  Article: BookOpen, Guide: CheckSquare, Video: Video, PDF: FileText,
 };
 
 const CTA_LABEL: Record<Resource['type'], string> = {
   Article: 'Read', Guide: 'Read', Video: 'Watch', PDF: 'Open',
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// RESOURCE CARD
-// ─────────────────────────────────────────────────────────────────────────────
-function ResourceCard({ resource }: { resource: Resource }) {
+// ── Dark-aware style builders ──
+function categoryStyle(cat: Exclude<Category,'All'>, dm: boolean): React.CSSProperties {
+  const map: Record<Exclude<Category,'All'>, { light: React.CSSProperties; dark: React.CSSProperties }> = {
+    Anxiety:    { light:{ background:'#eef5fd', color:'#185FA5' },                                    dark:{ background:'#0c1f3d', color:'#7ab8f5' } },
+    Depression: { light:{ background:'#f3f1fe', color:'#534AB7' },                                    dark:{ background:'#15123d', color:'#a49cf5' } },
+    Stress:     { light:{ background:'#fdf6e8', color:'#854F0B', border:'1px solid #f0d08a' },         dark:{ background:'#1f1500', color:'#fbbf24', border:'1px solid #3d2e00' } },
+    Wellness:   { light:{ background:'#008751', color:'#fff' },                                        dark:{ background:'#00451a', color:'#4ade80' } },
+    Crisis:     { light:{ background:'#fdf0f0', color:'#A32D2D', border:'1px solid #f5bebe' },         dark:{ background:'#1f0d0d', color:'#fca5a5', border:'1px solid #3d1a1a' } },
+  };
+  return dm ? map[cat].dark : map[cat].light;
+}
+
+function typeStyle(type: Resource['type'], dm: boolean): React.CSSProperties {
+  const map: Record<Resource['type'], { light: React.CSSProperties; dark: React.CSSProperties }> = {
+    Article: { light:{ background:'rgba(0,135,81,0.08)', color:'#3B6D11' }, dark:{ background:'rgba(0,135,81,0.15)', color:'#4ade80' } },
+    Guide:   { light:{ background:'rgba(0,135,81,0.15)', color:'#008751' }, dark:{ background:'rgba(0,135,81,0.20)', color:'#6ee7a0' } },
+    Video:   { light:{ background:'#f3f1fe', color:'#7F77DD' },             dark:{ background:'#15123d', color:'#a49cf5' } },
+    PDF:     { light:{ background:'#fdf6e8', color:'#BA7517' },             dark:{ background:'#1f1500', color:'#fbbf24' } },
+  };
+  return dm ? map[type].dark : map[type].light;
+}
+
+// ── Resource Card ──
+function ResourceCard({ resource, dm }: { resource: Resource; dm: boolean }) {
   const TypeIcon = TYPE_ICON[resource.type];
+  const C = {
+    cardBg:    dm ? '#0d1f14' : '#f0faf4',
+    cardBorder:dm ? '#1a3d2a' : '#b6e6cc',
+    h:         dm ? '#d1fae5' : '#1a3d1f',
+    sub:       dm ? '#6ee7a0' : '#3B6D11',
+    divider:   dm ? '#1a3d2a' : '#b6e6cc',
+    featBg:    dm ? '#1f1500' : '#fdf6e8',
+    featColor: dm ? '#fbbf24' : '#854F0B',
+    featBorder:dm ? '#3d2e00' : '#f0d08a',
+    dot:       dm ? '#1a3d2a' : '#b6e6cc',
+  };
   return (
     <div
       className="relative rounded-[20px] p-5 flex flex-col overflow-hidden transition-all duration-200 hover:-translate-y-[3px] cursor-pointer"
-      style={{ background: '#f0faf4', border: '1px solid #b6e6cc' }}
+      style={{ background: C.cardBg, border: `1px solid ${C.cardBorder}` }}
       onMouseEnter={e => e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,135,81,0.10)'}
       onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
     >
-      {/* Deco */}
       <div className="absolute bottom-[-18px] right-[-18px] w-[70px] h-[70px] rounded-full opacity-[0.06] pointer-events-none"
         style={{ background: '#008751' }} />
 
-      {/* Top badges */}
+      {/* Badges */}
       <div className="flex items-start justify-between gap-2 mb-3">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[13px] font-bold px-2.5 py-[3px] rounded-full"
-            style={CATEGORY_STYLE[resource.category]}>
+          <span className="text-[11px] font-bold px-2.5 py-[3px] rounded-full"
+            style={categoryStyle(resource.category, dm)}>
             {resource.category}
           </span>
-          <span className="text-[13px] font-semibold px-2.5 py-[3px] rounded-full inline-flex items-center gap-1"
-            style={TYPE_STYLE[resource.type]}>
+          <span className="text-[11px] font-semibold px-2.5 py-[3px] rounded-full inline-flex items-center gap-1"
+            style={typeStyle(resource.type, dm)}>
             <TypeIcon size={10} /> {resource.type}
           </span>
         </div>
         {resource.featured && (
-          <span className="text-[13px] font-bold px-2 py-[3px] rounded-full shrink-0 whitespace-nowrap"
-            style={{ background: '#fdf6e8', color: '#854F0B', border: '1px solid #f0d08a' }}>
+          <span className="text-[10px] font-bold px-2 py-[3px] rounded-full shrink-0 whitespace-nowrap"
+            style={{ background: C.featBg, color: C.featColor, border: `1px solid ${C.featBorder}` }}>
             ★ Featured
           </span>
         )}
       </div>
 
       {/* Title */}
-      <h3 className="text-[14px] font-bold leading-snug mb-2" style={{ color: '#1a3d1f' }}>
+      <h3 className="text-[14px] font-bold leading-snug mb-2" style={{ color: C.h }}>
         {resource.title}
       </h3>
 
       {/* Description */}
-      <p className="text-[14px] leading-relaxed flex-1 mb-4" style={{ color: '#3B6D11' }}>
+      <p className="text-[13px] leading-relaxed flex-1 mb-4" style={{ color: C.sub }}>
         {resource.description}
       </p>
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-3 mt-auto"
-        style={{ borderTop: '1px solid #b6e6cc' }}>
-        <div className="flex items-center gap-1.5 text-[13px]" style={{ color: '#3B6D11' }}>
+        style={{ borderTop: `1px solid ${C.divider}` }}>
+        <div className="flex items-center gap-1.5 text-[11px]" style={{ color: C.sub }}>
           <span>{resource.readTime}</span>
-          <span className="w-[3px] h-[3px] rounded-full" style={{ background: '#b6e6cc' }} />
+          <span className="w-[3px] h-[3px] rounded-full" style={{ background: C.dot }} />
           <span>{resource.date}</span>
         </div>
-        <button className="flex items-center gap-1 text-[11px] font-bold" style={{ color: '#008751', background: 'none', border: 'none', cursor: 'pointer' }}>
-          {CTA_LABEL[resource.type]} <ArrowRight size={13} />
+        <button className="flex items-center gap-1 text-[11px] font-bold"
+          style={{ color: '#00a86b', background: 'none', border: 'none', cursor: 'pointer' }}>
+          {CTA_LABEL[resource.type]} <ArrowRight size={11} />
         </button>
       </div>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MAIN PAGE
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Main Page ──
 export default function ResourcesPage() {
+  const [dm,       setDm]       = useState(false);
   const [category, setCategory] = useState<Category>('All');
   const [search,   setSearch]   = useState('');
+
+  useEffect(() => {
+    if (localStorage.getItem('theme') === 'dark') setDm(true);
+    const handler = (e: Event) =>
+      setDm((e as CustomEvent<{ isDarkMode: boolean }>).detail.isDarkMode);
+    window.addEventListener('themeToggle', handler);
+    return () => window.removeEventListener('themeToggle', handler);
+  }, []);
 
   const filtered = RESOURCES.filter(r => {
     const matchCat    = category === 'All' || r.category === category;
@@ -141,42 +155,58 @@ export default function ResourcesPage() {
 
   const featured = RESOURCES.filter(r => r.featured);
 
-  return (
-    <div className="px-6 py-5 pb-10">
+  // ── colour tokens ──
+  const C = {
+    h:          dm ? '#d1fae5' : '#1a3d1f',
+    sub:        dm ? '#6ee7a0' : '#3B6D11',
+    cardBg:     dm ? '#0d1f14' : '#f0faf4',
+    cardBorder: dm ? '#1a3d2a' : '#b6e6cc',
+    inputBg:    dm ? '#0d1f14' : '#fff',
+    inputText:  dm ? '#d1fae5' : '#1a3d1f',
+    filterIdle: dm ? '#0d1f14' : '#f0faf4',
+    filterBdr:  dm ? '#1a3d2a' : '#b6e6cc',
+    filterTxt:  dm ? '#6ee7a0' : '#3B6D11',
+    countTxt:   dm ? '#4ade80' : '#3B6D11',
+    crisisBg:   dm ? '#1f0d0d' : '#fdf0f0',
+    crisisBdr:  dm ? '#3d1a1a' : '#f5bebe',
+    crisisH:    dm ? '#fca5a5' : '#501313',
+    crisisTxt:  dm ? '#f87171' : '#A32D2D',
+    emptyIcon:  dm ? '#0d2e1a' : 'rgba(0,135,81,0.1)',
+  };
 
-      {/* ── Page Header ── */}
+  return (
+    <div className="px-6 py-5 pb-10" style={{ background: dm ? '#0a130d' : 'transparent' }}>
+
+      {/* ── Header ── */}
       <div className="mb-5">
-        <h2 className="text-[30px] font-bold" style={{ color: '#1a3d1f' }}>Mental Health Resources</h2>
-        <p className="text-[17px] mt-1" style={{ color: '#3B6D11' }}>
+        <h2 className="text-[22px] font-bold" style={{ color: C.h }}>Mental Health Resources</h2>
+        <p className="text-[15px] mt-1" style={{ color: C.sub }}>
           Curated articles, guides and videos to support your mental wellbeing
         </p>
       </div>
 
-      {/* ── Featured Banner ── */}
+      {/* ── Featured Banner — always dark by nature, works in both modes ── */}
       <div className="relative rounded-[20px] p-6 mb-5 overflow-hidden">
-        {/* Photo */}
         <div className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1200&q=80')" }} />
-        {/* Overlay */}
+          style={{ backgroundImage:"url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1200&q=80')" }} />
         <div className="absolute inset-0"
-          style={{ background: 'linear-gradient(135deg, rgba(0,40,20,0.96) 0%, rgba(0,70,35,0.90) 100%)' }} />
-
+          style={{ background:'linear-gradient(135deg, rgba(0,40,20,0.96) 0%, rgba(0,70,35,0.90) 100%)' }} />
         <div className="relative">
           <div className="flex items-center gap-2 mb-4">
-            <Star size={15} className="text-yellow-300" fill="currentColor" />
-            <p className="text-[14px] font-bold text-yellow-300 uppercase tracking-[0.1em]">Featured Resources</p>
+            <Star size={13} className="text-yellow-300" fill="currentColor" />
+            <p className="text-[12px] font-bold text-yellow-300 uppercase tracking-[0.1em]">Featured Resources</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {featured.map(r => (
               <button key={r.id}
                 className="text-left rounded-[14px] p-3.5 transition-all duration-150 hover:bg-white/[0.14]"
-                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}>
-                <span className="text-[14px] font-bold px-2.5 py-[3px] rounded-full inline-block mb-2"
-                  style={CATEGORY_STYLE[r.category]}>
+                style={{ background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.12)' }}>
+                <span className="text-[11px] font-bold px-2.5 py-[3px] rounded-full inline-block mb-2"
+                  style={categoryStyle(r.category, dm)}>
                   {r.category}
                 </span>
-                <p className="text-[15px] font-semibold text-white leading-snug mb-1.5">{r.title}</p>
-                <p className="text-[13px]" style={{ color: 'rgba(255,255,255,0.45)' }}>{r.readTime} · {r.type}</p>
+                <p className="text-[13px] font-semibold text-white leading-snug mb-1.5">{r.title}</p>
+                <p className="text-[11px]" style={{ color:'rgba(255,255,255,0.45)' }}>{r.readTime} · {r.type}</p>
               </button>
             ))}
           </div>
@@ -186,15 +216,22 @@ export default function ResourcesPage() {
       {/* ── Search + Filters ── */}
       <div className="flex flex-col gap-3 mb-4">
         <div className="relative">
-          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#3B6D11' }} />
+          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2"
+            style={{ color: C.sub }} />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search resources…"
             className="w-full h-10 pl-10 pr-4 rounded-full text-[12px] focus:outline-none transition-all"
-            style={{ background: '#fff', border: '1px solid #b6e6cc', color: '#1a3d1f' }}
-            onFocus={e => { e.currentTarget.style.borderColor = '#008751'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0,135,81,0.1)'; }}
-            onBlur={e => { e.currentTarget.style.borderColor = '#b6e6cc'; e.currentTarget.style.boxShadow = 'none'; }}
+            style={{ background: C.inputBg, border: `1px solid ${C.cardBorder}`, color: C.inputText }}
+            onFocus={e => {
+              e.currentTarget.style.borderColor = '#008751';
+              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0,135,81,0.15)';
+            }}
+            onBlur={e => {
+              e.currentTarget.style.borderColor = C.cardBorder;
+              e.currentTarget.style.boxShadow = 'none';
+            }}
           />
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -202,11 +239,11 @@ export default function ResourcesPage() {
             <button key={c} onClick={() => setCategory(c)}
               className="px-4 py-[6px] rounded-full text-[12px] font-semibold transition-all duration-150"
               style={category === c
-                ? { background: '#008751', color: '#fff', border: '1px solid #008751' }
-                : { background: '#f0faf4', border: '1px solid #b6e6cc', color: '#3B6D11' }
+                ? { background:'#008751', color:'#fff', border:'1px solid #008751' }
+                : { background: C.filterIdle, border:`1px solid ${C.filterBdr}`, color: C.filterTxt }
               }
               onMouseEnter={e => { if (category !== c) e.currentTarget.style.borderColor = '#008751'; }}
-              onMouseLeave={e => { if (category !== c) e.currentTarget.style.borderColor = '#b6e6cc'; }}
+              onMouseLeave={e => { if (category !== c) e.currentTarget.style.borderColor = C.filterBdr; }}
             >
               {c}
             </button>
@@ -215,7 +252,7 @@ export default function ResourcesPage() {
       </div>
 
       {/* ── Count ── */}
-      <p className="text-[16px] mb-4" style={{ color: '#3B6D11' }}>
+      <p className="text-[12px] mb-4" style={{ color: C.countTxt }}>
         Showing {filtered.length} resource{filtered.length !== 1 ? 's' : ''}
         {category !== 'All' ? ` in ${category}` : ''}
         {search ? ` for "${search}"` : ''}
@@ -224,32 +261,32 @@ export default function ResourcesPage() {
       {/* ── Grid ── */}
       {filtered.length === 0 ? (
         <div className="rounded-[20px] p-10 text-center"
-          style={{ background: '#f0faf4', border: '1px solid #b6e6cc' }}>
+          style={{ background: C.cardBg, border:`1px solid ${C.cardBorder}` }}>
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4"
-            style={{ background: 'rgba(0,135,81,0.1)' }}>
-            <Search size={20} style={{ color: '#008751' }} />
+            style={{ background: C.emptyIcon }}>
+            <Search size={20} style={{ color:'#008751' }} />
           </div>
-          <p className="text-[18px] font-bold mb-1" style={{ color: '#1a3d1f' }}>No resources found</p>
-          <p className="text-[17px]" style={{ color: '#3B6D11' }}>Try a different search term or category.</p>
+          <p className="text-[14px] font-bold mb-1" style={{ color: C.h }}>No resources found</p>
+          <p className="text-[13px]" style={{ color: C.sub }}>Try a different search term or category.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map(r => <ResourceCard key={r.id} resource={r} />)}
+          {filtered.map(r => <ResourceCard key={r.id} resource={r} dm={dm} />)}
         </div>
       )}
 
       {/* ── Crisis Box ── */}
       <div className="mt-6 rounded-[20px] px-5 py-5 flex items-start gap-4"
-        style={{ background: '#fdf0f0', border: '1px solid #f5bebe' }}>
+        style={{ background: C.crisisBg, border:`1px solid ${C.crisisBdr}` }}>
         <div className="w-10 h-10 rounded-[12px] flex items-center justify-center text-white shrink-0"
-          style={{ background: '#E24B4A' }}>
+          style={{ background:'#E24B4A' }}>
           <AlertTriangle size={18} />
         </div>
         <div>
-          <p className="text-[15px] font-bold mb-1" style={{ color: '#501313' }}>
+          <p className="text-[14px] font-bold mb-1" style={{ color: C.crisisH }}>
             In crisis or need urgent help?
           </p>
-          <p className="text-[15px] leading-relaxed" style={{ color: '#A32D2D' }}>
+          <p className="text-[13px] leading-relaxed" style={{ color: C.crisisTxt }}>
             If you are experiencing a mental health emergency, please contact the Yabatech counselling unit immediately or call the Nigerian suicide prevention line:{' '}
             <strong>0800-SUICIDE</strong>.
           </p>

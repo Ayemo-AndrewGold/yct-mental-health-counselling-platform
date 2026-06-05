@@ -9,6 +9,7 @@ import {
   LayoutGrid, HeartPulse, MessageSquare, CalendarCheck2,
   BookOpen, User, Settings, LogOut, ChevronLeft, Sun, Moon, ChevronRight,
 } from 'lucide-react'
+import Image from 'next/image'
 
 /* ── Nav structure ── */
 const NAV_GROUPS = [
@@ -199,10 +200,9 @@ export default function StudentSidebar() {
           {!isCollapsed && (
             <>
               <div
-                className="w-9 h-9 rounded-[10px] bg-[#008751] flex items-center justify-center text-white text-[13px] font-bold shrink-0"
-                style={{ fontFamily: 'Syne, sans-serif', border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,135,81,0.3)'}` }}
+                className="w-9 h-9 flex items-center justify-center text-white text-[13px] font-bold shrink-0"
               >
-                MB
+                <Image src="/favicon.png" width={40} height={40} alt="Logo" />
               </div>
               <div>
                 <p className="text-[16px] font-bold leading-tight" style={{ color: textPrimary, fontFamily: 'Syne, sans-serif' }}>
@@ -216,10 +216,9 @@ export default function StudentSidebar() {
           )}
           {isCollapsed && (
             <div
-              className="hidden lg:flex w-9 h-9 rounded-[10px] bg-[#008751] items-center justify-center text-white text-[13px] font-bold"
-              style={{ fontFamily: 'Syne, sans-serif', border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,135,81,0.3)'}` }}
+              className="hidden lg:flex w-9 h-9 rounded-[10px] bg-[#008751] items-center justify-center text-white font-bold"
             >
-              MB
+              <Image src="/favicon.png" width={40} height={40} alt="Logo" />
             </div>
           )}
         </div>
@@ -325,7 +324,7 @@ export default function StudentSidebar() {
                       className={`whitespace-nowrap flex-1 font-medium transition-all duration-300
                         ${isCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : 'opacity-100'}`}
                       style={{
-                        fontSize: '14px',
+                        fontSize: '15px',
                         fontWeight: active ? 600 : 500,
                         color: active ? activeLabelColor : idleLabelColor,
                       }}
