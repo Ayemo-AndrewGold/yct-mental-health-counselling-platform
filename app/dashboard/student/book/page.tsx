@@ -189,7 +189,7 @@ export default function BookSessionPage() {
           </div>
         </div>
         <div className="flex gap-3">
-          <Link href="/dashboard/student/appointments"
+          <Link href="/dashboard/student/sessions"
             className="flex-1 h-10 rounded-full text-white text-[12px] font-bold flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity"
             style={{ background: '#008751' }}>
             View My Sessions <ArrowRight size={12} />
@@ -394,7 +394,7 @@ export default function BookSessionPage() {
             {/* Header with photo overlay */}
             <div className="relative px-5 py-4 overflow-hidden">
               <div className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage:"url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&q=80')" }} />
+                style={{ backgroundImage:"url('https://camhs.huhs.harvard.edu/files/2025/04/homepage-2.jpg')" }} />
               <div className="absolute inset-0" style={{ background:'linear-gradient(105deg, rgba(0,40,20,0.96) 0%, rgba(0,70,35,0.90) 100%)' }} />
               <p className="relative text-[10px] font-bold text-yellow-300 uppercase tracking-[0.1em]">★ Booking Summary</p>
             </div>
