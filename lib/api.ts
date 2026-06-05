@@ -4,19 +4,51 @@ import Cookies from 'js-cookie'
 const BASE_URL = 'https://yct-mental-health-counselling-platform.onrender.com/api/auth';
 
 //------------ Fetch with Authentication --------
-export async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
-  const token = Cookies.get('access');
+    export async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
+      let token = Cookies.get('access');
 
-  const res = await fetch(`${BASE_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      ...options.headers,
-    },
-  });
-  return res;
-}
+      const res = await fetch(`${BASE_URL}${endpoint}`, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          ...options.headers,
+        },
+      });
+
+      // If 401, try to refresh the token
+      if (res.status === 401) {
+        const refresh = Cookies.get('refresh');
+        if (refresh) {
+          const refreshRes = await fetch(`${BASE_URL}/token/refresh/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh }),
+          });
+          if (refreshRes.ok) {
+            const data = await refreshRes.json();
+            Cookies.set('access', data.access, { expires: 1, sameSite: 'lax' });
+            // Retry original request with new token
+            return fetch(`${BASE_URL}${endpoint}`, {
+              ...options,
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${data.access}`,
+                ...options.headers,
+              },
+            });
+          } else {
+            // Refresh also failed — log user out
+            Cookies.remove('access');
+            Cookies.remove('refresh');
+            Cookies.remove('user');
+            window.location.href = '/login/student';
+          }
+        }
+      }
+
+      return res;
+    }
 
 
 //------------ Get Me  --------

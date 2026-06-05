@@ -282,12 +282,8 @@ export default function OverviewPage() {
 
       {/* ── Page Header ── */}
       <div>
-        <div className="flex items-center gap-2 text-[14px] mb-1" style={{ color: pageBreadcrumb }}>
-          <span>Portal</span>
-          <ChevronRight size={12} />
-          <span className="text-[18px] font-medium" style={{ color: pageSubtitle }}>Dashboard</span>
-        </div>
-        <h1 className="text-[30px] font-bold" style={{ color: pageTitle }}>Overview</h1>
+        
+        <h1 className="text-[30px] font-bold" style={{ color: pageTitle }}>Dashboard</h1>
         <p className="text-[16px] mt-1" style={{ color: pageSubtitle }}>
           Here's your mental health journey at Yabatech.
         </p>
