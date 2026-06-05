@@ -240,7 +240,7 @@ export default function StudentMessagesPage() {
   // SIDEBAR PANEL
   // ─────────────────────────────────────────
   const SidebarPanel = (
-    <div className="flex flex-col h-full" style={{ borderRight: `1px solid ${C.sideBorder}` }}>
+    <div className="flex flex-col pt-14 h-full" style={{ borderRight: `1px solid ${C.sideBorder}` }}>
       <div className="px-4 py-4 flex items-center justify-between"
         style={{ borderBottom: `1px solid ${C.sideBorder}` }}>
         <p className="text-[11px] font-bold uppercase tracking-[0.1em]" style={{ color: C.sideLabel }}>
@@ -298,7 +298,7 @@ export default function StudentMessagesPage() {
   // CHAT PANEL
   // ─────────────────────────────────────────
   const ChatPanel = (
-    <div className="flex-1 flex flex-col min-w-0 h-full">
+    <div className="flex-1 flex pt-10 flex-col min-w-0 h-full">
 
       {active ? (
         <>
