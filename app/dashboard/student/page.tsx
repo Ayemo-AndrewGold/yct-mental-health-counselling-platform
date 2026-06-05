@@ -459,7 +459,7 @@ export default function OverviewPage() {
                   <div className="h-px my-[20px]" style={{ background: apptDivider }} />
                   <p className="text-center text-[15px]" style={{ color: apptBody }}>
                     +{upcomingAppointments.length - 1} more upcoming.{' '}
-                    <Link href="/dashboard/student/appointments"
+                    <Link href="/dashboard/student/sessions"
                       className="font-bold text-[14px]" style={{ color: '#008751' }}>
                       View all
                     </Link>
