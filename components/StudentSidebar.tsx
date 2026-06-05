@@ -16,12 +16,12 @@ const NAV_GROUPS = [
   {
     section: 'Main',
     items: [
-      { label: 'Overview',        href: '/dashboard/student',              icon: LayoutGrid },
-      { label: 'Wellbeing Check', href: '/dashboard/student/assessment',   icon: HeartPulse,    badge: 'New' },
-      { label: 'Book',        href: '/dashboard/student/book',     icon: MessageSquare},
-      { label: 'Messages',        href: '/dashboard/student/messages',     icon: MessageSquare, badge: '3' },
-      { label: 'Appointments',    href: '/dashboard/student/sessions', icon: CalendarCheck2 },
-      { label: 'Resources',       href: '/dashboard/student/resources',    icon: BookOpen },
+      { label: 'Overview', href: '/dashboard/student', icon: LayoutGrid },
+      { label: 'Wellbeing Check', href: '/dashboard/student/assessment',   icon: HeartPulse},
+      { label: 'Book', href: '/dashboard/student/book', icon: MessageSquare},
+      { label: 'Messages', href: '/dashboard/student/messages', icon: MessageSquare },
+      { label: 'Appointments', href: '/dashboard/student/sessions', icon: CalendarCheck2 },
+      { label: 'Resources', href: '/dashboard/student/resources', icon: BookOpen },
     ],
   },
   {
@@ -290,9 +290,8 @@ export default function StudentSidebar() {
                 <div className="h-px mx-2 my-3" style={{ background: sectionDivider }} />
               )}
 
-              {group.items.map(({ href, label, icon: Icon, badge }) => {
+              {group.items.map(({ href, label, icon: Icon}) => {
                 const active = pathname === href
-                const isNum  = badge && badge !== 'New'
                 return (
                   <Link
                     key={href}
@@ -332,18 +331,7 @@ export default function StudentSidebar() {
                       {label}
                     </span>
 
-                    {/* Badge */}
-                    {badge && !isCollapsed && (
-                      <span
-                        className={`text-[10px] font-bold px-[7px] py-[2px] rounded-full`}
-                        style={isNum
-                          ? { background: 'rgba(239,68,68,0.18)', color: '#f87171', border: '1px solid rgba(239,68,68,0.28)' }
-                          : { background: 'rgba(250,204,21,0.15)', color: '#fbbf24', border: '1px solid rgba(250,204,21,0.28)' }
-                        }
-                      >
-                        {badge}
-                      </span>
-                    )}
+                  
 
                     {/* Collapsed tooltip */}
                     {isCollapsed && (
@@ -439,11 +427,11 @@ export default function StudentSidebar() {
         {/* Mobile view hamberChevron */}
         <button
         onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="fixed top-2 left-1 z-[200] lg:hidden p-[5px] rounded-full shadow-lg text-white"
+        className="fixed top-3 left-1 z-[200] lg:hidden p-[3px] rounded-full shadow-lg text-yellow-300"
         style={{ background: '#003d1f' }}
         aria-label="Toggle menu"
       >
-        {isMobileOpen ? <ChevronLeft size={15} /> : <ChevronRight size={15} />}
+        {isMobileOpen ? <ChevronLeft size={25} /> : <ChevronRight size={25} />}
       </button>
       {isMobileOpen && (
         <div

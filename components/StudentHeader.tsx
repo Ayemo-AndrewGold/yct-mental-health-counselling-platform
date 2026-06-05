@@ -1,9 +1,10 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { getMe } from '@/lib/api'
+import { getMe, getMessages } from '@/lib/api'
 import Cookies from 'js-cookie'
 import { Bell, Search, ChevronDown, Sun, Moon, X } from 'lucide-react'
+import Link from 'next/link'
 
 interface User {
   full_name:     string
@@ -39,26 +40,43 @@ export default function StudentHeader() {
 
   const wellbeingKey = 'Good' as keyof typeof WELLBEING_MAP
   const wb = WELLBEING_MAP[wellbeingKey]
-  const notifCount = 3
+  const [notifCount, setNotifCount] = useState(0)
+  const [showNotif, setShowNotif] = useState(false)
+  const [unreadConvs, setUnreadConvs] = useState<{user_id: number; full_name: string; last_message: string; last_time: string; unread: number}[]>([])
 
-  useEffect(() => {
-    const now = new Date()
-    setHour(now.getHours())
-    setDateStr(
-      now.toLocaleDateString('en-GB', {
-        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-      }) + ' · Yaba College of Technology'
-    )
-    const stored = Cookies.get('user')
-    if (stored) setUser(JSON.parse(stored))
+ useEffect(() => {
+  const now = new Date()
+  setHour(now.getHours())
+  setDateStr(
+    now.toLocaleDateString('en-GB', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    }) + ' · Yaba College of Technology'
+  )
+  const stored = Cookies.get('user')
+  if (stored) setUser(JSON.parse(stored))
 
-    getMe().then((data) => {
-      if (data) {
-        setUser(data)
-        Cookies.set('user', JSON.stringify(data), { expires: 1 })
-      }
-    })
-  }, [])
+  getMe().then((data) => {
+    if (data) {
+      setUser(data)
+      Cookies.set('user', JSON.stringify(data), { expires: 1 })
+    }
+  })
+
+    function fetchUnread() {
+      getMessages().then((data: { user_id: number; full_name: string; last_message: string; last_time: string; unread: number }[]) => {
+        if (!Array.isArray(data)) return
+        const total = data.reduce((sum, c) => sum + (c.unread || 0), 0)
+        setNotifCount(total)
+        setUnreadConvs(data.filter(c => c.unread > 0))
+      }).catch(() => {})
+    }
+
+  // Wait for token to be ready then fetch
+  setTimeout(fetchUnread, 1000)
+
+  const interval = setInterval(fetchUnread, 10000)
+  return () => clearInterval(interval)
+}, [])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -73,6 +91,15 @@ export default function StudentHeader() {
     window.addEventListener('themeToggle', handleThemeChange)
     return () => window.removeEventListener('themeToggle', handleThemeChange)
   }, [])
+
+  useEffect(() => {
+  function handleClickOutside(e: MouseEvent) {
+    const target = e.target as HTMLElement
+    if (!target.closest('[data-notif]')) setShowNotif(false)
+  }
+  document.addEventListener('mousedown', handleClickOutside)
+  return () => document.removeEventListener('mousedown', handleClickOutside)
+}, [])
 
 const toggleDarkMode = () => {
   setIsDarkMode((prev) => {
@@ -104,7 +131,7 @@ const toggleDarkMode = () => {
   return (
     <>
       <header
-        className="sticky top-0 z-50 h-[4.79rem] flex items-center justify-between flex-shrink-0 font-[lexend] overflow-hidden px-3 sm:px-5 md:px-6 gap-2 sm:gap-4 backdrop-blur-md"
+        className="sticky top-0 z-50 h-[4.79rem] flex items-center justify-between flex-shrink-0 font-[lexend] px-3 sm:px-5 md:px-6 gap-2 sm:gap-4 backdrop-blur-md"
         style={{ borderBottom: headerBorder }}
       >
 
@@ -201,7 +228,9 @@ const toggleDarkMode = () => {
             </div>
 
             {/* Notification bell */}
+          <div className="relative">
             <div
+              onClick={() => setShowNotif(prev => !prev)}
               className={`relative w-[36px] h-[36px] rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 ${pillHover}`}
               style={{ background: pillBg, border: pillBorder }}
             >
@@ -217,6 +246,89 @@ const toggleDarkMode = () => {
                 </div>
               )}
             </div>
+
+            {/* Dropdown */}
+            {showNotif && (
+              <div
+                className="absolute right-0 top-[44px] w-[300px] rounded-2xl overflow-hidden shadow-xl z-50"
+                style={{
+                  background: isDarkMode ? '#0d1f14' : '#fff',
+                  border: `1px solid ${isDarkMode ? 'rgba(0,135,81,0.25)' : '#b6e6cc'}`,
+                }}
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3"
+                  style={{ borderBottom: `1px solid ${isDarkMode ? 'rgba(0,135,81,0.2)' : '#b6e6cc'}` }}>
+                  <p className="text-[15px] font-bold" style={{ color: isDarkMode ? '#fff' : '#1a3d1f' }}>
+                    Notifications
+                  </p>
+                  {notifCount > 0 && (
+                    <span className="text-[9px] font-bold px-2 py-[2px] rounded-full bg-red-100 text-red-600">
+                      {notifCount} unread
+                    </span>
+                  )}
+                </div>
+
+                {/* List */}
+                <div className="max-h-[280px] overflow-y-auto">
+                  {unreadConvs.length === 0 ? (
+                    <div className="px-4 py-6 text-center">
+                      <p className="text-[13px]" style={{ color: isDarkMode ? 'rgba(255,255,255,0.4)' : '#3B6D11' }}>
+                        No new notifications
+                      </p>
+                    </div>
+                  ) : (
+                    unreadConvs.map(conv => (
+                      <Link
+                        key={conv.user_id}
+                        href="/dashboard/student/messages"
+                        onClick={() => setShowNotif(false)}
+                        className="flex items-start gap-3 px-4 py-3 transition-colors hover:bg-opacity-80"
+                        style={{
+                          borderBottom: `1px solid ${isDarkMode ? 'rgba(0,135,81,0.1)' : '#f0faf4'}`,
+                          background: isDarkMode ? 'rgba(0,135,81,0.08)' : 'rgba(0,135,81,0.04)',
+                        }}
+                      >
+                        {/* Avatar */}
+                        <div className="w-9 h-9 rounded-full bg-[#008751] flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+                          {conv.full_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-[12px] font-bold truncate" style={{ color: isDarkMode ? '#fff' : '#1a3d1f' }}>
+                              {conv.full_name}
+                            </p>
+                            <span className="text-[9px] shrink-0" style={{ color: isDarkMode ? 'rgba(255,255,255,0.4)' : '#3B6D11' }}>
+                              {conv.last_time}
+                            </span>
+                          </div>
+                          <p className="text-[11px] truncate mt-0.5" style={{ color: isDarkMode ? 'rgba(255,255,255,0.5)' : '#3B6D11' }}>
+                            {conv.last_message}
+                          </p>
+                          <span className="inline-block mt-1 text-[9px] font-bold px-1.5 py-[1px] rounded-full bg-red-100 text-red-600">
+                            {conv.unread} new
+                          </span>
+                        </div>
+                      </Link>
+                    ))
+                  )}
+                </div>
+
+                {/* Footer */}
+                <Link
+                  href="/dashboard/student/messages"
+                  onClick={() => setShowNotif(false)}
+                  className="flex items-center justify-center py-3 text-[13px] font-bold transition-colors hover:opacity-80"
+                  style={{
+                    borderTop: `1px solid ${isDarkMode ? 'rgba(0,135,81,0.2)' : '#b6e6cc'}`,
+                    color: '#008751',
+                  }}
+                >
+                  View all messages →
+                </Link>
+              </div>
+            )}
+          </div>
 
             {/* Theme toggle */}
             <button

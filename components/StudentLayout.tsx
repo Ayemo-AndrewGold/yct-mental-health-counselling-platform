@@ -66,7 +66,7 @@ export default function PortalLayout({
         <StudentHeader />
 
         {/* Main content */}
-        <main className="flex-1 pt-0">
+        <main className="flex-1 overflow-y-auto">
           <div className="max-w-[1600px] mx-auto">
             <div
               className="min-h-[calc(100vh-4.25rem)] transition-colors duration-300"
