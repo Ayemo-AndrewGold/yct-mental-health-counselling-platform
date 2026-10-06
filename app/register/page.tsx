@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import toast, { Toast } from 'react-hot-toast'
+import { API_BASE_URL } from '@/lib/config'
 
 const DEPARTMENTS = [
   'Computer Technology',
@@ -114,7 +115,7 @@ export default function RegisterPage() {
     if (err) { toast.error(err); return }
     setLoading(true)
     try {
-      const res = await fetch('https://yct-mental-health-counselling-platform.onrender.com/api/auth/register/', {
+      const res = await fetch(`${API_BASE_URL}/register/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

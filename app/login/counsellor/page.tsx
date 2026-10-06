@@ -25,7 +25,7 @@ export default function CounsellorLoginPage() {
 
     setLoading(true);
     try {
-      const res = await fetch('https://yct-mental-health-counselling-platform.onrender.com/api/auth/login/', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/auth'}/login/`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json' },
         body: JSON.stringify({ email: staffId, password }),
@@ -57,7 +57,7 @@ export default function CounsellorLoginPage() {
     <div className="h-screen overflow-hidden flex" style={{ fontFamily: "'Nunito', sans-serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&family=Lora:wght@600;700&display=swap');
-        .counsellor-bg { background: linear-gradient(135deg, #0d9488 0%, #0f766e 40%, #134e4a 100%); }
+        .counsellor-bg { background: linear-gradient(135deg, #68a753 0%, #5f9b4b 40%, #5f974c 100%); }
         .blob-1 { background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%); }
         .blob-2 { background: radial-gradient(circle, rgba(204,251,241,0.15) 0%, transparent 70%); }
         .card-soft { background: rgba(255,255,255,0.12); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.18); }
@@ -131,7 +131,6 @@ export default function CounsellorLoginPage() {
       <div className="flex-1 flex items-center justify-center right-panel px-6 py-12">
 
         <div className="w-full max-w-md">
-
           {/* Mobile header */}
           <div className="flex items-center gap-3 mb-10 lg:hidden">
             <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center">

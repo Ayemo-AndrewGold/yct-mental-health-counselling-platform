@@ -1,149 +1,396 @@
-'use client';
+'use client'
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { usePathname, useRouter } from 'next/navigation';
-import Cookies from 'js-cookie';
+import React, { useEffect, useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import Link from 'next/link'
+import Cookies from 'js-cookie'
+import {
+  LayoutGrid, CalendarCheck2, Users, ClipboardList,
+  MessageSquare, FileText, BookOpen, User, Settings,
+  LogOut, ChevronLeft, ChevronRight, Sun, Moon,
+} from 'lucide-react'
+import Image from 'next/image'
 
 const NAV_GROUPS = [
   {
     section: 'Main',
     items: [
-      {
-        label: 'Overview', href: '/dashboard/counsellor',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>,
-      },
-      {
-        label: 'My Appointments', href: '/dashboard/counsellor/appointments',
-        badge: '5',
-        badgeStyle: 'bg-yellow-400/20 text-yellow-300',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
-      },
-      {
-        label: 'My Students', href: '/dashboard/counsellor/students',
-        badge: '24',
-        badgeStyle: 'bg-blue-400/20 text-blue-300',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>,
-      },
-      {
-        label: 'Cases', href: '/dashboard/counsellor/cases',
-        badge: '3',
-        badgeStyle: 'bg-red-500/20 text-red-400',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
-      },
-      {
-        label: 'Messages', href: '/dashboard/counsellor/messages',
-        badge: '7',
-        badgeStyle: 'bg-green-400/20 text-green-300',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,
-      },
+      { label: 'Overview',        href: '/dashboard/counsellor',              icon: LayoutGrid      },
+      { label: 'Appointments',    href: '/dashboard/counsellor/appointments', icon: CalendarCheck2, badge: '5',  badgeStyle: 'bg-yellow-400/20 text-yellow-300' },
+      { label: 'My Students',     href: '/dashboard/counsellor/students',     icon: Users,          badge: '24', badgeStyle: 'bg-blue-400/20 text-blue-300'   },
+      { label: 'Cases',           href: '/dashboard/counsellor/cases',        icon: ClipboardList,  badge: '3',  badgeStyle: 'bg-red-400/20 text-red-300'     },
+      { label: 'Messages',        href: '/dashboard/counsellor/messages',     icon: MessageSquare,  badge: '7',  badgeStyle: 'bg-green-400/20 text-green-300' },
     ],
   },
   {
     section: 'Tools',
     items: [
-      {
-        label: 'Session Notes', href: '/dashboard/counsellor/notes',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>,
-      },
-      {
-        label: 'Resources', href: '/dashboard/counsellor/resources',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>,
-      },
+      { label: 'Session Notes',   href: '/dashboard/counsellor/notes',        icon: FileText   },
+      { label: 'Resources',       href: '/dashboard/counsellor/resources',    icon: BookOpen   },
     ],
   },
   {
     section: 'Account',
     items: [
-      {
-        label: 'My Profile', href: '/dashboard/counsellor/profile',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>,
-      },
-      {
-        label: 'Settings', href: '/dashboard/counsellor/settings',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>,
-      },
+      { label: 'My Profile',      href: '/dashboard/counsellor/profile',      icon: User       },
+      { label: 'Settings',        href: '/dashboard/counsellor/settings',     icon: Settings   },
     ],
   },
-];
+]
+
+function getInitials(name: string) {
+  return name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
+}
 
 export default function CounsellorSidebar() {
-  const pathname = usePathname();
-  const router = useRouter();
+  const pathname = usePathname()
+  const router   = useRouter()
 
-  function handleLogout() {
-    Cookies.remove('access');
-    Cookies.remove('refresh');
-    Cookies.remove('user');
-    router.push('/login/counsellor');
+  const [isCollapsed,  setIsCollapsed]  = useState(false)
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const [isDarkMode,   setIsDarkMode]   = useState(false)
+  const [user, setUser] = useState<{ full_name: string; email?: string } | null>(null)
+
+  // ── Dark mode ──
+  const toggleDarkMode = () => {
+    setIsDarkMode((prev) => {
+      const next = !prev
+      localStorage.setItem('theme', next ? 'dark' : 'light')
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('themeToggle', { detail: { isDarkMode: next } }))
+      }, 0)
+      return next
+    })
   }
 
-  return (
-    <aside className="hidden lg:flex w-[240px] shrink-0 flex-col bg-teal-800 overflow-hidden">
+  useEffect(() => {
+    const saved = localStorage.getItem('theme')
+    setIsDarkMode(saved === 'dark')
+  }, [])
 
-      {/* HEADER */}
-      <div className="px-4 pt-[18px] pb-[14px] border-b border-white/[0.07]">
-        <div className="flex items-center gap-2.5 mb-3.5">
-          <Image src="/favicon.png" width={40} height={40} alt="Logo" />
-          <div className="leading-tight">
-            <p className="text-base font-semibold text-white">MindBridge</p>
-            <p className="text-xs text-white/40">Counsellor Portal</p>
-          </div>
+  // ── User from cookie ──
+  useEffect(() => {
+    const stored = Cookies.get('user')
+    if (stored) setUser(JSON.parse(stored))
+  }, [])
+
+  // ── Sync collapsed state ──
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('sidebarToggle', { detail: { isCollapsed } }))
+      localStorage.setItem('sidebarCollapsed', JSON.stringify(isCollapsed))
+    }
+  }, [isCollapsed])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sidebarCollapsed')
+      if (saved) setIsCollapsed(JSON.parse(saved))
+    }
+  }, [])
+
+  // ── Listen for theme from header ──
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const custom = e as CustomEvent<{ isDarkMode: boolean }>
+      if (custom.detail?.isDarkMode !== undefined) setIsDarkMode(custom.detail.isDarkMode)
+    }
+    window.addEventListener('themeToggle', handler)
+    return () => window.removeEventListener('themeToggle', handler)
+  }, [])
+
+  // ── Close mobile drawer on navigation ──
+  useEffect(() => { setIsMobileOpen(false) }, [pathname])
+
+  // ── Lock scroll when mobile open ──
+  useEffect(() => {
+    document.body.style.overflow = isMobileOpen ? 'hidden' : 'unset'
+    return () => { document.body.style.overflow = 'unset' }
+  }, [isMobileOpen])
+
+  function handleLogout() {
+    Cookies.remove('access')
+    Cookies.remove('refresh')
+    Cookies.remove('user')
+    router.push('/login/counsellor')
+  }
+
+  const firstName = user?.full_name?.split(' ')[0] ?? 'Counsellor'
+  const initials  = user?.full_name ? getInitials(user.full_name) : 'CO'
+  const roleLabel = 'YCT Counsellor'
+
+  // ── Theme tokens (identical to StudentSidebar) ──
+  const textPrimary    = isDarkMode ? '#ffffff'                 : '#111827'
+  const textSecondary  = isDarkMode ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)'
+  const textMuted      = isDarkMode ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.30)'
+  const sectionDivider = isDarkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'
+  const cardBg         = isDarkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)'
+  const cardBorder     = isDarkMode ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.09)'
+  const topBorder      = isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'
+  const activeItemBg     = isDarkMode ? 'rgba(0,135,81,0.30)'  : 'rgba(0,135,81,0.12)'
+  const activeItemBorder = isDarkMode ? 'rgba(0,135,81,0.40)'  : 'rgba(0,135,81,0.35)'
+  const activeIconBg     = '#008751'
+  const activeIconColor  = '#ffffff'
+  const activeLabelColor = isDarkMode ? '#ffffff'                : '#004d2e'
+  const idleIconBg     = isDarkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'
+  const idleIconColor  = isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.50)'
+  const idleLabelColor = isDarkMode ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)'
+  const hoverBg        = isDarkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'
+  const pillBg         = isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'
+  const pillBorder     = isDarkMode ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.10)'
+  const logoutHoverBg  = 'rgba(239,68,68,0.10)'
+
+  const SidebarBody = () => (
+    <div className="flex flex-col h-full">
+
+      {/* ── Background layers ── */}
+      {isDarkMode ? (
+        <>
+          <div className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&q=80')" }} />
+          <div className="absolute inset-0"
+            style={{ background: 'linear-gradient(160deg, rgba(0,40,20,0.97) 0%, rgba(0,60,30,0.95) 40%, rgba(0,80,40,0.90) 70%, rgba(0,55,25,0.96) 100%)' }} />
+        </>
+      ) : (
+        <div className="absolute inset-0 bg-white" />
+      )}
+
+      <div className="relative flex flex-col h-full">
+
+        {/* ── Brand ── */}
+        <div
+          className={`flex items-center gap-2.5 px-5 py-[22px] pb-4 shrink-0 ${isCollapsed ? 'lg:justify-center' : ''}`}
+          style={{ borderBottom: `1px solid ${topBorder}` }}
+        >
+          {!isCollapsed && (
+            <>
+              <Image src="/favicon.png" width={40} height={40} alt="Logo" />
+              <div>
+                <p className="text-[16px] font-bold leading-tight" style={{ color: textPrimary, fontFamily: 'Syne, sans-serif' }}>
+                  MindBridge
+                </p>
+                <p className="text-[11px] tracking-wide mt-px" style={{ color: textSecondary }}>
+                  Counsellor Portal
+                </p>
+              </div>
+            </>
+          )}
+          {isCollapsed && (
+            <div className="hidden lg:flex w-9 h-9 rounded-[10px] items-center justify-center">
+              <Image src="/favicon.png" width={40} height={40} alt="Logo" />
+            </div>
+          )}
         </div>
-      </div>
 
-      {/* NAV */}
-      <nav className="flex-1 overflow-y-auto py-2 [&::-webkit-scrollbar]:hidden">
-        {NAV_GROUPS.map(({ section, items }) => (
-          <div key={section} className="mb-1">
-            <p className="px-4 pt-3 pb-1 text-[11px] font-semibold text-white/25 uppercase tracking-[0.10em]">
-              {section}
-            </p>
-            {items.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`relative flex items-center gap-[10px] mx-2.5 px-3 py-2.5 rounded-md transition-all duration-150 my-1
-                    ${isActive ? 'bg-white/[0.12]' : 'hover:bg-white/[0.07]'}`}
-                >
-                  {isActive && (
-                    <span className="absolute -left-2.5 top-1/2 -translate-y-1/2 w-[3px] h-[18px] bg-teal-300 rounded-r-full" />
-                  )}
-                  <span className={`transition-opacity ${isActive ? 'opacity-100 [&_svg]:stroke-white' : 'opacity-[0.55] [&_svg]:stroke-white'}`}>
-                    {item.icon}
-                  </span>
-                  <span className={`text-[13px] font-medium transition-all flex-1 ${isActive ? 'text-white' : 'text-white/60'}`}>
-                    {item.label}
-                  </span>
-                  {item.badge !== undefined && (
-                    <span className={`text-[10px] font-bold px-[6px] py-[2px] rounded-full ${item.badgeStyle}`}>
-                      {item.badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
+        {/* ── Collapse toggle ── */}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="hidden lg:flex absolute -right-3 top-8 items-center justify-center w-6 h-6 rounded-full bg-[#008751] text-white shadow-lg hover:scale-110 transition-all duration-200 z-50"
+          style={{ border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,135,81,0.4)'}` }}
+          aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {isCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+        </button>
+
+        {/* ── User card ── */}
+        {!isCollapsed && (
+          <div
+            className="mx-3 mt-3 mb-1.5 rounded-[14px] px-3.5 py-3 flex items-center gap-2.5"
+            style={{ background: cardBg, border: `1px solid ${cardBorder}` }}
+          >
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0 bg-[#008751]"
+              style={{ border: `2px solid ${isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,135,81,0.3)'}` }}
+            >
+              {initials}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[14px] font-semibold truncate" style={{ color: textPrimary }}>{firstName}</p>
+              <p className="text-[11px] truncate mt-px" style={{ color: textSecondary }}>{roleLabel}</p>
+            </div>
+            <div
+              className="flex items-center gap-1 shrink-0 px-2 py-[3px] rounded-full text-[9px] font-bold tracking-wide"
+              style={{
+                background: 'rgba(0,135,81,0.18)',
+                border: '1px solid rgba(0,135,81,0.35)',
+                color: isDarkMode ? '#86efac' : '#15803d',
+              }}
+            >
+              <span className="w-[5px] h-[5px] rounded-full bg-green-500 animate-pulse" />
+              Online
+            </div>
           </div>
-        ))}
-      </nav>
+        )}
 
-      {/* FOOTER */}
-      <div className="px-4 py-3 border-t border-white/[0.07] flex items-center justify-between">
+        {isCollapsed && (
+          <div className="hidden lg:flex justify-center mt-3 mb-1.5">
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[11px] font-bold bg-[#008751]"
+              style={{ border: `2px solid ${isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,135,81,0.3)'}` }}
+            >
+              {initials}
+            </div>
+          </div>
+        )}
+
+        {/* ── Nav ── */}
+        <nav className="flex flex-col flex-1 overflow-y-auto px-3 pb-2 mt-1 gap-[2px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {NAV_GROUPS.map((group, gi) => (
+            <div key={group.section}>
+              {!isCollapsed && (
+                <p
+                  className={`text-[10px] font-bold uppercase tracking-[0.12em] px-2 mb-1 ${gi > 0 ? 'mt-4' : 'mt-2'}`}
+                  style={{ color: textMuted }}
+                >
+                  {group.section}
+                </p>
+              )}
+              {isCollapsed && gi > 0 && (
+                <div className="h-px mx-2 my-3" style={{ background: sectionDivider }} />
+              )}
+
+              {group.items.map(({ href, label, icon: Icon, badge, badgeStyle }: any) => {
+                const active = pathname === href
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    title={isCollapsed ? label : ''}
+                    className={`flex items-center gap-2.5 px-2.5 py-2 rounded-[12px] transition-all duration-200 group relative mb-[2px]
+                      ${isCollapsed ? 'lg:justify-center' : ''}`}
+                    style={active
+                      ? { background: activeItemBg, border: `1px solid ${activeItemBorder}` }
+                      : { border: '1px solid transparent' }
+                    }
+                    onMouseEnter={e => { if (!active) e.currentTarget.style.background = hoverBg }}
+                    onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+                  >
+                    <span
+                      className="w-[32px] h-[32px] rounded-[9px] flex items-center justify-center shrink-0 transition-all"
+                      style={{ background: active ? activeIconBg : idleIconBg }}
+                    >
+                      <Icon size={16} style={{ color: active ? activeIconColor : idleIconColor }} strokeWidth={1.8} />
+                    </span>
+
+                    <span
+                      className={`whitespace-nowrap flex-1 font-medium transition-all duration-300
+                        ${isCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : 'opacity-100'}`}
+                      style={{
+                        fontSize: '15px',
+                        fontWeight: active ? 600 : 500,
+                        color: active ? activeLabelColor : idleLabelColor,
+                      }}
+                    >
+                      {label}
+                    </span>
+
+                    {badge && !isCollapsed && (
+                      <span className={`text-[10px] font-bold px-[6px] py-[2px] rounded-full shrink-0 ${badgeStyle}`}>
+                        {badge}
+                      </span>
+                    )}
+
+                    {isCollapsed && (
+                      <span className="hidden lg:block absolute left-full ml-4 px-3 py-2 rounded-lg text-sm font-medium opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg"
+                        style={{ background: isDarkMode ? '#1f2937' : '#111827', color: '#ffffff' }}>
+                        {label}
+                      </span>
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
+          ))}
+
+          {/* Theme toggle (mobile) */}
+          <button
+            onClick={toggleDarkMode}
+            className="flex lg:hidden w-fit self-start mt-2 items-center rounded-full p-[3px] gap-0.5 transition-all duration-300"
+            style={{ background: pillBg, border: pillBorder }}
+            aria-label="Toggle dark mode"
+          >
+            <span className={`w-[28px] h-[28px] rounded-full flex items-center justify-center transition-all duration-200 ${!isDarkMode ? 'bg-[#008751] text-white shadow-sm' : 'text-white/40'}`}>
+              <Sun size={15} />
+            </span>
+            <span className={`w-[28px] h-[28px] rounded-full flex items-center justify-center transition-all duration-200 ${isDarkMode ? 'bg-white/15 text-white' : 'text-black/30'}`}>
+              <Moon size={15} />
+            </span>
+          </button>
+        </nav>
+
+        {/* ── Logout ── */}
         <button
           onClick={handleLogout}
-          className="flex items-center gap-[6px] px-2 py-1.5 -mx-2 rounded-md hover:bg-white/[0.07] transition-colors"
+          className={`flex items-center gap-2.5 mx-3 mb-4 mt-1 px-2.5 py-2 rounded-[12px] transition-all duration-200 group
+            ${isCollapsed ? 'lg:justify-center' : ''}`}
+          style={{ border: '1px solid transparent' }}
+          onMouseEnter={e => { e.currentTarget.style.background = logoutHoverBg }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
         >
-          <svg className="w-[13px] h-[13px] stroke-white/35" viewBox="0 0 24 24" fill="none" strokeWidth="1.75">
-            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-          <span className="text-[11px] text-white/35">Sign out</span>
+          <span
+            className="w-[32px] h-[32px] rounded-[9px] flex items-center justify-center shrink-0"
+            style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.20)' }}
+          >
+            <LogOut size={16} style={{ color: '#f87171' }} strokeWidth={1.8} />
+          </span>
+          <span
+            className={`whitespace-nowrap font-medium transition-all duration-300
+              ${isCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : 'opacity-100'}`}
+            style={{ fontSize: '14px', color: '#f87171' }}
+          >
+            Sign out
+          </span>
         </button>
-        <span className="text-[9.5px] text-white/20">v1.0.0</span>
+
+        {/* Mobile close */}
+        <div className="px-3 pb-4 lg:hidden shrink-0">
+          <button
+            onClick={() => setIsMobileOpen(false)}
+            className="w-full py-3 rounded-2xl text-sm font-medium transition-all"
+            style={{ background: cardBg, border: `1px solid ${cardBorder}`, color: textSecondary }}
+          >
+            Close Menu
+          </button>
+        </div>
       </div>
-    </aside>
-  );
+    </div>
+  )
+
+  return (
+    <>
+      {/* Mobile hamburger */}
+      <button
+        onClick={() => setIsMobileOpen(!isMobileOpen)}
+        className="fixed top-3 left-1 z-[200] lg:hidden p-[3px] rounded-full shadow-lg text-yellow-300"
+        style={{ background: '#003d1f' }}
+        aria-label="Toggle menu"
+      >
+        {isMobileOpen ? <ChevronLeft size={25} /> : <ChevronRight size={25} />}
+      </button>
+
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 z-[90] lg:hidden backdrop-blur-sm"
+          style={{ background: 'rgba(0,0,0,0.45)' }}
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+
+      <aside
+        className={`
+          fixed left-0 top-0 h-screen shadow-2xl font-[lexend]
+          transition-all duration-300 ease-in-out z-[100] overflow-visible
+          ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}
+          w-72
+          ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}
+        style={{
+          borderRight: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)'}`,
+          boxShadow: isDarkMode ? '4px 0 24px rgba(0,0,0,0.4)' : '4px 0 24px rgba(0,0,0,0.07)',
+        }}
+      >
+        <SidebarBody />
+      </aside>
+    </>
+  )
 }

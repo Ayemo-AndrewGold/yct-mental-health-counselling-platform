@@ -1,7 +1,8 @@
 import Cookies from 'js-cookie'
+import { API_BASE_URL } from './config'
 
 
-const BASE_URL = 'https://yct-mental-health-counselling-platform.onrender.com/api/auth';
+const BASE_URL = API_BASE_URL;
 
 //------------ Fetch with Authentication --------
     export async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
@@ -99,7 +100,7 @@ export async function cancelAppointment(id: number) {
 
 //------------ Updated Profile --------
 export async function updateProfile(data: Record<string, string | undefined>) {
-  const res = await fetchWithAuth('/me/update', {
+  const res = await fetchWithAuth('/me/update/', {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
@@ -188,6 +189,52 @@ export async function sendMessage(receiverId: number, text: string){
 export async function markMessagesRead(userId: number) {
   const res = await fetchWithAuth(`/messages/${userId}/read/`, {
     method: 'POST',
+  });
+  return res;
+}
+
+// ─── Counsellor Cases ─────────────────────────────────────────────────────────
+export async function getCounsellorCases() {
+  const res = await fetchWithAuth('/counsellor/cases/');
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function createCounsellorCase(data: Record<string, unknown>) {
+  const res = await fetchWithAuth('/counsellor/cases/', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  return res;
+}
+
+export async function updateCounsellorCase(id: string | number, data: Record<string, unknown>) {
+  const res = await fetchWithAuth(`/counsellor/cases/${id}/`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+  return res;
+}
+
+// ─── Counsellor Notes ─────────────────────────────────────────────────────────
+export async function getCounsellorNotes() {
+  const res = await fetchWithAuth('/counsellor/notes/');
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function createCounsellorNote(data: Record<string, unknown>) {
+  const res = await fetchWithAuth('/counsellor/notes/', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  return res;
+}
+
+export async function updateCounsellorNote(id: string | number, data: Record<string, unknown>) {
+  const res = await fetchWithAuth(`/counsellor/notes/${id}/`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
   });
   return res;
 }

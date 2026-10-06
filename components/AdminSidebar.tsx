@@ -1,190 +1,410 @@
-'use client';
+'use client'
 
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import Image from 'next/image';
-import Cookies from 'js-cookie';
+import React, { useEffect, useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import Link from 'next/link'
+import Cookies from 'js-cookie'
+import Image from 'next/image'
+import {
+  LayoutGrid, Users, UserCheck, ClipboardList,
+  CalendarCheck2, BookOpen, BarChart2, TrendingUp,
+  UserCog, FileText, Settings, LogOut,
+  ChevronLeft, ChevronRight, Sun, Moon, Shield, Database,
+} from 'lucide-react'
+import { getAdminStats } from '@/lib/api'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TYPES
-// ─────────────────────────────────────────────────────────────────────────────
-interface NavItem {
-  label: string;
-  href: string;
-  icon: React.ReactNode;
-  badge?: number;
-  badgeStyle?: string;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// NAV CONFIG
-// ─────────────────────────────────────────────────────────────────────────────
-const NAV_GROUPS: { section: string; items: NavItem[] }[] = [
+// ─── Static nav structure (badges come from API) ──────────────────────────────
+const NAV_GROUPS = [
   {
     section: 'Platform',
     items: [
-      {
-        label: 'Overview', href: '/dashboard/admin',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="18" y="18" width="7" height="7" rx="1"/><rect x="3" y="18" width="7" height="7" rx="1"/></svg>,
-      },
-      {
-        label: 'Students', href: '/dashboard/admin/students',
-        badge: 1248,
-        badgeStyle: 'bg-[#f5a623]/20 text-[#f5a623]',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>,
-      },
-      {
-        label: 'Counsellors', href: '/dashboard/admin/counsellors',
-        badge: 8,
-        badgeStyle: 'bg-green-400/20 text-green-400',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>,
-      },
-      {
-        label: 'Cases', href: '/dashboard/admin/cases',
-        badge: 142,
-        badgeStyle: 'bg-red-500/20 text-red-400',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
-      },
-      {
-        label: 'Appointments', href: '/dashboard/admin/appointments',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
-      },
-      {
-        label: 'Resources', href: '/dashboard/admin/resources',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>,
-      },
+      { label: 'Overview',     href: '/dashboard/admin',              icon: LayoutGrid,     statsKey: null            },
+      { label: 'Students',     href: '/dashboard/admin/students',     icon: Users,          statsKey: 'total_students',    badgeStyle: 'bg-amber-400/20 text-amber-300' },
+      { label: 'Counsellors',  href: '/dashboard/admin/counsellors',  icon: UserCheck,      statsKey: 'total_counsellors', badgeStyle: 'bg-green-400/20 text-green-300' },
+      { label: 'Cases',        href: '/dashboard/admin/cases',        icon: ClipboardList,  statsKey: null,                badge: '—', badgeStyle: 'bg-red-400/20 text-red-300' },
+      { label: 'Appointments', href: '/dashboard/admin/appointments', icon: CalendarCheck2, statsKey: 'total_appointments', badgeStyle: 'bg-blue-400/20 text-blue-300' },
+      { label: 'Resources',    href: '/dashboard/admin/resources',    icon: BookOpen,       statsKey: null            },
     ],
   },
   {
     section: 'Analytics',
     items: [
-      {
-        label: 'Reports', href: '/dashboard/admin/reports',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
-      },
-      {
-        label: 'Insights', href: '/dashboard/admin/insights',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
-      },
+      { label: 'Reports',  href: '/dashboard/admin/reports',  icon: BarChart2,  statsKey: null },
+      { label: 'Insights', href: '/dashboard/admin/insights', icon: TrendingUp, statsKey: null },
     ],
   },
   {
     section: 'System',
     items: [
-      {
-        label: 'User Management', href: '/dashboard/admin/users',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>,
-      },
-      {
-        label: 'Audit Logs', href: '/dashboard/admin/logs',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>,
-      },
-      {
-        label: 'Settings', href: '/dashboard/admin/settings',
-        icon: <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65  0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09a1.65 1.65 0 00-1-1.51A1.65 1.65 0 003.6 15a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33h.09a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51z"/></svg>,
-      },
+      { label: 'User Management', href: '/dashboard/admin/users',     icon: UserCog,  statsKey: null },
+      { label: 'Seed Demo Data',  href: '/dashboard/admin/seed',      icon: Database, statsKey: null, badge: 'NEW', badgeStyle: 'bg-amber-400/20 text-amber-300' },
+      { label: 'Audit Logs',      href: '/dashboard/admin/logs',      icon: FileText, statsKey: null },
+      { label: 'Settings',        href: '/dashboard/admin/settings',  icon: Settings, statsKey: null },
     ],
   },
-];
+]
 
-// ─────────────────────────────────────────────────────────────────────────────
-// COMPONENT
-// ─────────────────────────────────────────────────────────────────────────────
+function getInitials(name: string) {
+  return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
+}
+
+// ─── Stats interface ──────────────────────────────────────────────────────────
+interface Stats {
+  total_students: number;
+  total_counsellors: number;
+  total_appointments: number;
+  pending_appointments: number;
+}
+
 export default function AdminSidebar() {
-  const pathname = usePathname();
-  const router   = useRouter();
+  const pathname = usePathname()
+  const router   = useRouter()
 
-  async function handleLogout() {
-    Cookies.remove('access');
-    Cookies.remove('refresh');
-    Cookies.remove('user');
+  const [isCollapsed,  setIsCollapsed]  = useState(false)
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const [isDarkMode,   setIsDarkMode]   = useState(false)
+  const [user,  setUser]  = useState<{ full_name: string; email?: string } | null>(null)
+  const [stats, setStats] = useState<Stats | null>(null)
+
+  // ── Dark mode ──────────────────────────────────────────────────────────────
+  const toggleDarkMode = () => {
+    setIsDarkMode(prev => {
+      const next = !prev
+      localStorage.setItem('theme', next ? 'dark' : 'light')
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('themeToggle', { detail: { isDarkMode: next } }))
+      }, 0)
+      return next
+    })
+  }
+
+  useEffect(() => {
+    const saved = localStorage.getItem('theme')
+    setIsDarkMode(saved === 'dark')
+  }, [])
+
+  // ── User cookie ────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const stored = Cookies.get('user')
+    if (stored) setUser(JSON.parse(stored))
+  }, [])
+
+  // ── Fetch live stats for badges ────────────────────────────────────────────
+  useEffect(() => {
+    getAdminStats().then(data => { if (data) setStats(data) })
+    // Refresh every 30 s so badges update after seeding
+    const interval = setInterval(() => {
+      getAdminStats().then(data => { if (data) setStats(data) })
+    }, 30_000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // ── Sidebar collapsed sync ─────────────────────────────────────────────────
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('sidebarToggle', { detail: { isCollapsed } }))
+      localStorage.setItem('sidebarCollapsed', JSON.stringify(isCollapsed))
+    }
+  }, [isCollapsed])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sidebarCollapsed')
+      if (saved) setIsCollapsed(JSON.parse(saved))
+    }
+  }, [])
+
+  // ── Theme listener ─────────────────────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ev = e as CustomEvent<{ isDarkMode: boolean }>
+      if (ev.detail?.isDarkMode !== undefined) setIsDarkMode(ev.detail.isDarkMode)
+    }
+    window.addEventListener('themeToggle', handler)
+    return () => window.removeEventListener('themeToggle', handler)
+  }, [])
+
+  useEffect(() => { setIsMobileOpen(false) }, [pathname])
+  useEffect(() => {
+    document.body.style.overflow = isMobileOpen ? 'hidden' : 'unset'
+    return () => { document.body.style.overflow = 'unset' }
+  }, [isMobileOpen])
+
+  function handleLogout() {
+    Cookies.remove('access')
+    Cookies.remove('refresh')
+    Cookies.remove('user')
     router.push('/login/admin')
   }
 
-  return (
-    <aside className="hidden lg:flex w-[260px] shrink-0 flex-col bg-[#1a5c2a] overflow-hidden">
+  // ── Derive badge value from live stats ────────────────────────────────────
+  function getBadge(item: any): string | undefined {
+    if (item.statsKey && stats) {
+      const val = (stats as any)[item.statsKey]
+      if (val !== undefined && val !== null) {
+        return Number(val).toLocaleString()
+      }
+    }
+    return item.badge
+  }
 
-      {/* ── HEADER ── */}
-      <div className="px-4 pt-[18px] pb-[14px] border-b border-white/[0.07]">
+  const firstName = user?.full_name?.split(' ')[0] ?? 'Admin'
+  const initials  = user?.full_name ? getInitials(user.full_name) : 'SA'
+
+  // ── Colour tokens ──────────────────────────────────────────────────────────
+  const textPrimary    = isDarkMode ? '#ffffff'                 : '#111827'
+  const textSecondary  = isDarkMode ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)'
+  const textMuted      = isDarkMode ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.30)'
+  const sectionDivider = isDarkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'
+  const cardBg         = isDarkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)'
+  const cardBorder     = isDarkMode ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.09)'
+  const topBorder      = isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'
+  const activeItemBg     = isDarkMode ? 'rgba(245,166,35,0.18)' : 'rgba(245,166,35,0.10)'
+  const activeItemBorder = isDarkMode ? 'rgba(245,166,35,0.40)' : 'rgba(245,166,35,0.35)'
+  const activeIconBg     = '#f5a623'
+  const activeIconColor  = '#ffffff'
+  const activeLabelColor = isDarkMode ? '#ffffff'                : '#7c3d00'
+  const idleIconBg     = isDarkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'
+  const idleIconColor  = isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.50)'
+  const idleLabelColor = isDarkMode ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)'
+  const hoverBg        = isDarkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'
+  const pillBg         = isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'
+  const pillBorder     = isDarkMode ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.10)'
+  const logoutHoverBg  = 'rgba(239,68,68,0.10)'
+
+  const SidebarBody = () => (
+    <div className="flex flex-col h-full">
+      {/* Background */}
+      {isDarkMode ? (
+        <>
+          <div className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80')" }} />
+          <div className="absolute inset-0"
+            style={{ background: 'linear-gradient(160deg, rgba(10,25,10,0.97) 0%, rgba(20,45,15,0.95) 40%, rgba(15,35,10,0.96) 100%)' }} />
+        </>
+      ) : (
+        <div className="absolute inset-0 bg-white" />
+      )}
+
+      <div className="relative flex flex-col h-full">
+
         {/* Brand */}
-        <div className="flex items-center gap-2.5 mb-3.5">
-          <Image src="/favicon.png" width={44} height={44} alt="Logo" />
-          <div className="leading-tight">
-            <p className="text-base font-semibold text-white">MindBridge</p>
-            <p className="text-xs tracking-wide text-white/40">Admin Portal</p>
-          </div>
+        <div
+          className={`flex items-center gap-2.5 px-5 py-[22px] pb-4 shrink-0 ${isCollapsed ? 'lg:justify-center' : ''}`}
+          style={{ borderBottom: `1px solid ${topBorder}` }}
+        >
+          {!isCollapsed && (
+            <>
+              <Image src="/favicon.png" width={40} height={40} alt="Logo" />
+              <div>
+                <p className="text-[16px] font-bold leading-tight" style={{ color: textPrimary, fontFamily: 'Syne, sans-serif' }}>
+                  MindBridge
+                </p>
+                <p className="text-[11px] tracking-wide mt-px" style={{ color: textSecondary }}>Admin Portal</p>
+              </div>
+            </>
+          )}
+          {isCollapsed && (
+            <div className="hidden lg:flex w-9 h-9 rounded-[10px] items-center justify-center">
+              <Image src="/favicon.png" width={40} height={40} alt="Logo" />
+            </div>
+          )}
         </div>
 
-        {/* Admin user card */}
-        <div className="flex items-center gap-2.5 bg-white/[0.07] border border-white/[0.10] rounded-xl px-3 py-2.5">
-          <div className="w-[30px] h-[30px] rounded-full bg-gradient-to-br from-[#f5a623]/40 to-[#f5a623]/15 border-[1.5px] border-[#f5a623]/50 flex items-center justify-center text-[#f5a623] text-[15px] font-bold shrink-0">
-            SA
-          </div>
-          <div className="flex-1 min-w-0 leading-tight">
-            <p className="text-[14px] font-semibold text-white truncate">System Admin</p>
-            <p className="text-[12px] text-white/40">Super Administrator</p>
-          </div>
-          {/* Admin shield badge */}
-          <div className="w-[18px] h-[18px] rounded-md bg-[#f5a623]/20 border border-[#f5a623]/30 flex items-center justify-center shrink-0">
-            <svg className="w-[10px] h-[10px]" viewBox="0 0 24 24" fill="none" stroke="#f5a623" strokeWidth="2">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-          </div>
-        </div>
-      </div>
+        {/* Collapse toggle */}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="hidden lg:flex absolute -right-3 top-8 items-center justify-center w-6 h-6 rounded-full text-white shadow-lg hover:scale-110 transition-all duration-200 z-50"
+          style={{ background: '#f5a623', border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(245,166,35,0.4)'}` }}
+        >
+          {isCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+        </button>
 
-      {/* ── NAV ── */}
-      <nav className="flex-1 overflow-y-auto py-2 [&::-webkit-scrollbar]:hidden">
-        {NAV_GROUPS.map(({ section, items }) => (
-          <div key={section} className="mb-1">
-            <p className="px-4 pt-3 pb-1 text-[13px] font-semibold text-white/25 uppercase tracking-[0.10em]">
-              {section}
-            </p>
-            {items.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`relative flex items-center gap-[10px] mx-2.5 px-3 py-3 rounded-md transition-all duration-150 my-2.5 font-bold
-                    ${isActive ? 'bg-white/[0.12] font-bold' :  'hover:bg-white/[0.07] '}`}
+        {/* User card */}
+        {!isCollapsed && (
+          <div
+            className="mx-3 mt-3 mb-1.5 rounded-[14px] px-3.5 py-3 flex items-center gap-2.5"
+            style={{ background: cardBg, border: `1px solid ${cardBorder}` }}
+          >
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0"
+              style={{ background: 'linear-gradient(135deg, #f5a623, #d97706)', border: '2px solid rgba(245,166,35,0.40)' }}
+            >
+              {initials}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[14px] font-semibold truncate" style={{ color: textPrimary }}>{firstName}</p>
+              <p className="text-[11px] truncate mt-px" style={{ color: textSecondary }}>Super Administrator</p>
+            </div>
+            <div className="flex items-center justify-center w-6 h-6 rounded-md shrink-0"
+              style={{ background: 'rgba(245,166,35,0.18)', border: '1px solid rgba(245,166,35,0.35)' }}>
+              <Shield size={11} style={{ color: '#f5a623' }} />
+            </div>
+          </div>
+        )}
+
+        {isCollapsed && (
+          <div className="hidden lg:flex justify-center mt-3 mb-1.5">
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[11px] font-bold"
+              style={{ background: 'linear-gradient(135deg, #f5a623, #d97706)', border: '2px solid rgba(245,166,35,0.40)' }}>
+              {initials}
+            </div>
+          </div>
+        )}
+
+        {/* Nav */}
+        <nav className="flex flex-col flex-1 overflow-y-auto px-3 pb-2 mt-1 gap-[2px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {NAV_GROUPS.map((group, gi) => (
+            <div key={group.section}>
+              {!isCollapsed && (
+                <p
+                  className={`text-[10px] font-bold uppercase tracking-[0.12em] px-2 mb-1 ${gi > 0 ? 'mt-4' : 'mt-2'}`}
+                  style={{ color: textMuted }}
                 >
-                  {isActive && (
-                    <span className="absolute -left-2.5 top-1/2 -translate-y-1/2 w-[3px] h-[18px] font-bold bg-[#f5a623] rounded-r-full" />
-                  )}
-                  <span className={`transition-opacity ${isActive ? 'opacity-100 [&_svg]:stroke-white font-bold' : 'opacity-[0.55]  [&_svg]:stroke-white'}`}>
-                    {item.icon}
-                  </span>
-                  <span className={`text-[16px] font-bold transition-all flex-1 ${isActive ? 'text-white font-medium font-bold' : 'text-white/60 font-bold'}`}>
-                    {item.label}
-                  </span>
-                  {item.badge !== undefined && (
-                    <span className={`text-[12px] font-bold px-[7px] py-[3px] rounded-full leading-[1.4] ${item.badgeStyle}`}>
-                      {item.badge.toLocaleString()}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
+                  {group.section}
+                </p>
+              )}
+              {isCollapsed && gi > 0 && (
+                <div className="h-px mx-2 my-3" style={{ background: sectionDivider }} />
+              )}
 
-      {/* ── FOOTER ── */}
-      <div className="px-4 py-3 border-t border-white/[0.07] flex items-center justify-between">
+              {group.items.map((item: any) => {
+                const { href, label, icon: Icon, badgeStyle } = item
+                const active = pathname === href
+                const badge  = getBadge(item)
+
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    title={isCollapsed ? label : ''}
+                    className={`flex items-center gap-2.5 px-2.5 py-2 rounded-[12px] transition-all duration-200 group relative mb-[2px]
+                      ${isCollapsed ? 'lg:justify-center' : ''}`}
+                    style={active
+                      ? { background: activeItemBg, border: `1px solid ${activeItemBorder}` }
+                      : { border: '1px solid transparent' }
+                    }
+                    onMouseEnter={e => { if (!active) e.currentTarget.style.background = hoverBg }}
+                    onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+                  >
+                    <span
+                      className="w-[32px] h-[32px] rounded-[9px] flex items-center justify-center shrink-0 transition-all"
+                      style={{ background: active ? activeIconBg : idleIconBg }}
+                    >
+                      <Icon size={16} style={{ color: active ? activeIconColor : idleIconColor }} strokeWidth={1.8} />
+                    </span>
+                    <span
+                      className={`whitespace-nowrap flex-1 font-medium transition-all duration-300
+                        ${isCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : 'opacity-100'}`}
+                      style={{ fontSize: '15px', fontWeight: active ? 600 : 500, color: active ? activeLabelColor : idleLabelColor }}
+                    >
+                      {label}
+                    </span>
+                    {badge && !isCollapsed && (
+                      <span className={`text-[10px] font-bold px-[6px] py-[2px] rounded-full shrink-0 ${badgeStyle ?? ''}`}>
+                        {badge}
+                      </span>
+                    )}
+                    {isCollapsed && (
+                      <span
+                        className="hidden lg:block absolute left-full ml-4 px-3 py-2 rounded-lg text-sm font-medium opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg"
+                        style={{ background: isDarkMode ? '#1f2937' : '#111827', color: '#ffffff' }}
+                      >
+                        {label}
+                        {badge ? ` (${badge})` : ''}
+                      </span>
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
+          ))}
+
+          {/* Theme toggle (mobile only) */}
+          <button
+            onClick={toggleDarkMode}
+            className="flex lg:hidden w-fit self-start mt-2 items-center rounded-full p-[3px] gap-0.5 transition-all duration-300"
+            style={{ background: pillBg, border: pillBorder }}
+          >
+            <span className={`w-[28px] h-[28px] rounded-full flex items-center justify-center transition-all duration-200 ${!isDarkMode ? 'text-white shadow-sm' : 'text-white/40'}`}
+              style={{ background: !isDarkMode ? '#f5a623' : 'transparent' }}>
+              <Sun size={15} />
+            </span>
+            <span className={`w-[28px] h-[28px] rounded-full flex items-center justify-center transition-all duration-200 ${isDarkMode ? 'bg-white/15 text-white' : 'text-black/30'}`}>
+              <Moon size={15} />
+            </span>
+          </button>
+        </nav>
+
+        {/* Logout */}
         <button
           onClick={handleLogout}
-          className="flex items-center gap-[6px] px-2 py-1.5 -mx-2 rounded-md hover:bg-white/[0.07] transition-colors"
+          className={`flex items-center gap-2.5 mx-3 mb-4 mt-1 px-2.5 py-2 rounded-[12px] transition-all duration-200 group
+            ${isCollapsed ? 'lg:justify-center' : ''}`}
+          style={{ border: '1px solid transparent' }}
+          onMouseEnter={e => { e.currentTarget.style.background = logoutHoverBg }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
         >
-          <svg className="w-[13px] h-[13px] stroke-white/35" viewBox="0 0 24 24" fill="none" strokeWidth="1.75">
-            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-          <span className="text-[11px] text-white/35">Sign out</span>
+          <span className="w-[32px] h-[32px] rounded-[9px] flex items-center justify-center shrink-0"
+            style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.20)' }}>
+            <LogOut size={16} style={{ color: '#f87171' }} strokeWidth={1.8} />
+          </span>
+          <span
+            className={`whitespace-nowrap font-medium transition-all duration-300
+              ${isCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : 'opacity-100'}`}
+            style={{ fontSize: '14px', color: '#f87171' }}
+          >
+            Sign out
+          </span>
         </button>
-        <span className="text-[9.5px] text-white/20">v2.1.0</span>
+
+        {/* Mobile close */}
+        <div className="px-3 pb-4 lg:hidden shrink-0">
+          <button
+            onClick={() => setIsMobileOpen(false)}
+            className="w-full py-3 rounded-2xl text-sm font-medium transition-all"
+            style={{ background: cardBg, border: `1px solid ${cardBorder}`, color: textSecondary }}
+          >
+            Close Menu
+          </button>
+        </div>
       </div>
-    </aside>
-  );
+    </div>
+  )
+
+  return (
+    <>
+      <button
+        onClick={() => setIsMobileOpen(!isMobileOpen)}
+        className="fixed top-3 left-1 z-[200] lg:hidden p-[3px] rounded-full shadow-lg"
+        style={{ background: '#7c3d00', color: '#f5a623' }}
+      >
+        {isMobileOpen ? <ChevronLeft size={25} /> : <ChevronRight size={25} />}
+      </button>
+
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 z-[90] lg:hidden backdrop-blur-sm"
+          style={{ background: 'rgba(0,0,0,0.45)' }}
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+
+      <aside
+        className={`
+          fixed left-0 top-0 h-screen shadow-2xl font-[lexend]
+          transition-all duration-300 ease-in-out z-[100] overflow-visible
+          ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}
+          w-72
+          ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}
+        style={{
+          borderRight: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)'}`,
+          boxShadow: isDarkMode ? '4px 0 24px rgba(0,0,0,0.4)' : '4px 0 24px rgba(0,0,0,0.07)',
+        }}
+      >
+        <SidebarBody />
+      </aside>
+    </>
+  )
 }

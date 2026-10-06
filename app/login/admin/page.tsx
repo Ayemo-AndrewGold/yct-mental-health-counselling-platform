@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Cookies from 'js-cookie'
+import { API_BASE_URL } from '@/lib/config'
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -25,7 +26,7 @@ export default function AdminLoginPage() {
 
     setLoading(true);
    try {
-    const res = await fetch('https://yct-mental-health-counselling-platform.onrender.com/api/auth/login/', {
+    const res = await fetch(`${API_BASE_URL}/login/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }, 
       body: JSON.stringify({ email, password}),
@@ -55,7 +56,7 @@ export default function AdminLoginPage() {
     <div className="h-screen overflow-hidden flex" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap');
-        .admin-gradient { background: radial-gradient(ellipse at 20% 50%, #1e293b 0%, #0f172a 60%, #020617 100%); }
+        .admin-gradient { background: radial-gradient(ellipse at 20% 50%, #78d15a 0%, #68a753 60%, #68a753 100%); }
         .shield-glow { box-shadow: 0 0 40px rgba(245,158,11,0.15), 0 0 80px rgba(245,158,11,0.05); }
         .amber-ring { border: 1px solid rgba(245,158,11,0.3); }
         .grid-bg {
@@ -63,7 +64,7 @@ export default function AdminLoginPage() {
             linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
           background-size: 40px 40px;
         }
-        .stat-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+        .stat-card { background: [#071a0f]; border: 1px solid rgba(255,255,255,0.08); }
       `}</style>
 
       {/* ───────── LEFT PANEL – Dark Command Center ───────── */}
@@ -137,7 +138,7 @@ export default function AdminLoginPage() {
       </div>
 
       {/* ───────── RIGHT PANEL ───────── */}
-      <div className="flex-1 flex items-center justify-center bg-slate-950 px-6 py-12">
+      <div className="flex-1 flex items-center justify-center bg-[#071a0f] px-6 py-12">
 
         <div className="w-full max-w-md">
 

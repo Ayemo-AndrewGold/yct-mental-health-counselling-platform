@@ -7,6 +7,7 @@ import Image from 'next/image'
 import Cookies from 'js-cookie'
 import { ShieldCheck, Eye, EyeOff } from 'lucide-react'
 import toast, { Toast } from "react-hot-toast"
+import { API_BASE_URL } from '@/lib/config'
 
 const SLIDES = [
   { src: '/health1.jpg', alt: 'Mental health support' },
@@ -55,7 +56,7 @@ export default function StudentLoginPage() {
     }
     setLoading(true)
     try {
-      const res  = await fetch('https://yct-mental-health-counselling-platform.onrender.com/api/auth/login/', {
+      const res  = await fetch(`${API_BASE_URL}/login/`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ email: identifier, password }),
